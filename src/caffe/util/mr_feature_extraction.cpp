@@ -15,6 +15,7 @@
 #include "caffe/util/db.hpp"
 #include "caffe/util/format.hpp"
 #include "caffe/util/io.hpp"
+#include "caffe/util/mr_feature_extraction.hpp"
 
 using caffe::Blob;
 using caffe::Caffe;
@@ -23,39 +24,30 @@ using caffe::Net;
 using std::string;
 namespace db = caffe::db;
 
-template<typename Dtype>
-int feature_extraction_pipeline(
-    std::string pretrained_binary_proto,
-    std::string feature_extraction_proto,
-    std::string extract_feature_blob_names,
-    std::string target_pipe_path,
-    int num_mini_batches,
-    Caffe::Brew caffe_mode,
-    int device_id
-);
-
-int feature_extraction_pipeline_wrapper(
+int MRFeatureExtraction::run_feature_extraction_pipeline(
   const char* pretrained_binary_proto,
   const char* feature_extraction_proto
 ) {
+  stop_signal_ = false;
+
   return feature_extraction_pipeline<float>(
     pretrained_binary_proto,
     feature_extraction_proto,
     "pool5/7x7_s1",
-    "\\\\.\\pipe\\foursquare_pcv1_output_pipe",
-    1,
+    get_output_pipe_path(),
+    50,
     Caffe::GPU,
     0
   );
 }
 
 template<typename Dtype>
-int feature_extraction_pipeline(
+int MRFeatureExtraction::feature_extraction_pipeline(
   std::string pretrained_binary_proto,
   std::string feature_extraction_proto,
   std::string extract_feature_blob_names,
   std::string target_pipe_path,
-  int num_mini_batches,
+  int mini_batch_size,
   Caffe::Brew caffe_mode,
   int device_id
 ) {
@@ -106,7 +98,7 @@ int feature_extraction_pipeline(
 
   // The total number of images to be processed is the product of batch_size in prototxt and num_mini_batches here.
   // The app here has no awareness of the number of image files.
-  for (int batch_index = 0; batch_index < num_mini_batches; ++batch_index) {
+  while (!stop_signal_) {
     feature_extraction_net->Forward();
     for (int i = 0; i < num_blobs; ++i) {
       const boost::shared_ptr<Blob<Dtype> > feature_blob =
@@ -131,7 +123,7 @@ int feature_extraction_pipeline(
         CHECK(datum.SerializeToString(&out));
         txns.at(i)->Put(key_str, out);
         ++image_indices[i];
-        if (image_indices[i] % 1000 == 0) {
+        if (image_indices[i] % mini_batch_size == 0) {
           txns.at(i)->Commit();
           txns.at(i).reset(feature_db->NewTransaction());
           LOG(ERROR)<< "Extracted features of " << image_indices[i] <<
@@ -143,7 +135,7 @@ int feature_extraction_pipeline(
   // write the last batch
 
   for (int i = 0; i < num_features; ++i) {
-    if (image_indices[i] % 1000 != 0) {
+    if (image_indices[i] % mini_batch_size != 0) {
       txns.at(i)->Commit();
     }
     LOG(ERROR)<< "Extracted features of " << image_indices[i] <<

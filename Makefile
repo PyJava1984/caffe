@@ -94,6 +94,17 @@ ifneq ($(MATLAB_DIR),)
 endif
 MAT$(PROJECT)_SO := matlab/+$(PROJECT)/private/$(PROJECT)_.$(MAT_SO_EXT)
 
+JAVA_JDK := $$(readlink /usr/bin/javac | sed "s:bin/javac::")
+
+JAVA$(PROJECT)_SRC := jni/src/*.cpp
+JAVA$(PROJECT)_SO := lib/libcaffe_jni.so
+JAVA$(PROJECT)_JAR := lib/caffe_jni.jar
+
+LINKFLAGS := -pthread -fPIC -Wall -I../.build_release/src -I../caffe/src \
+				-I../include -I/usr/local/cuda/include -I./include -I./jni/include \
+				-I./include/caffe/util
+JAVA_FLAGS := -I$(JAVA_JDK)/include -I$(JAVA_JDK)include/linux
+
 ##############################
 # Derive generated files
 ##############################
@@ -445,6 +456,8 @@ endif
 
 all: lib tools examples
 
+java: $(JAVA$(PROJECT)_SO)
+
 lib: $(STATIC_NAME) $(DYNAMIC_NAME)
 
 everything: $(EVERYTHING_TARGETS)
@@ -637,6 +650,15 @@ $(PY_PROTO_BUILD_DIR)/%_pb2.py : $(PROTO_SRC_DIR)/%.proto \
 $(PY_PROTO_INIT): | $(PY_PROTO_BUILD_DIR)
 	touch $(PY_PROTO_INIT)
 
+$(JAVA$(PROJECT)_SO): $(JAVA$(PROJECT)_SRC)
+	$(CXX) -shared -o $@ $(JAVA$(PROJECT)_SRC) $(LINKFLAGS) $(JAVA_FLAGS) -L./build/lib -lcaffe
+	@ echo
+	mkdir -p lib
+	javac -d . src/com/foursquare/caffe/jMRFeatureExtraction.java
+	cp src/com/foursquare/caffe/jMRFeatureExtraction.java com/foursquare/caffe/
+	jar cf $(JAVA$(PROJECT)_JAR) com/*
+	rm -r com
+
 clean:
 	@- $(RM) -rf $(ALL_BUILD_DIRS)
 	@- $(RM) -rf $(OTHER_BUILD_DIR)
@@ -644,6 +666,8 @@ clean:
 	@- $(RM) -rf $(DISTRIBUTE_DIR)
 	@- $(RM) $(PY$(PROJECT)_SO)
 	@- $(RM) $(MAT$(PROJECT)_SO)
+	@- $(RM) $(JAVA$(PROJECT)_SO)
+	@- $(RM) $(JAVA$(PROJECT)_JAR)
 
 supercleanfiles:
 	$(eval SUPERCLEAN_FILES := $(strip \
