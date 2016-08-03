@@ -628,6 +628,7 @@ message DataParameter {
   enum DB {
     LEVELDB = 0;
     LMDB = 1;
+    PIPE = 2;
   }
   // Specify the data source.
   optional string source = 1;
