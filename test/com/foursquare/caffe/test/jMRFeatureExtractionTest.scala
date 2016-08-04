@@ -17,7 +17,7 @@ object jMRFeatureExtractionTestApp extends App {
   val outputStream = new FileOutputStream(featureExtraction.getOutputPipePath)
   val inputStream = new FileInputStream(featureExtraction.getInputPipePath)
 
-  featureExtraction.start("", "")
+  featureExtraction.start(args(1), args(2))
 
   val fileListPath = args(0)
   val source = Source.fromFile(fileListPath)
