@@ -94,7 +94,7 @@ ifneq ($(MATLAB_DIR),)
 endif
 MAT$(PROJECT)_SO := matlab/+$(PROJECT)/private/$(PROJECT)_.$(MAT_SO_EXT)
 
-JAVA_JDK := $$(readlink /usr/bin/javac | sed "s:bin/javac::")
+JAVA_JDK := $$(readlink -f /usr/bin/javac | sed "s:bin/javac::")
 
 JAVA$(PROJECT)_SRC := jni/src/*.cpp
 JAVA$(PROJECT)_SO := lib/libcaffe_jni.so

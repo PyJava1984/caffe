@@ -7,6 +7,7 @@
 
 #include <string>
 #include <queue>
+#include <stdexcept>
 #include <boost/functional/hash.hpp>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream.h>
