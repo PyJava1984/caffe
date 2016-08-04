@@ -8,7 +8,6 @@
 #include <string>
 #include <queue>
 #include <stdexcept>
-#include <boost/functional/hash.hpp>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
@@ -18,7 +17,6 @@
 
 #include "caffe/util/db.hpp"
 #include "caffe/proto/caffe.pb.h"
-#include "caffe/proto/foursquare.pb.h"
 
 namespace db=caffe::db;
 
@@ -46,20 +44,15 @@ namespace caffe {
         current_.ParseFromZeroCopyStream(input_);
       }
       virtual std::string key() {
-        std::stringstream str_stream;
-
-        str_stream << key_hash(current_.serializedmessage());
-
-        return str_stream.str();
+        return "";
       }
-      virtual std::string value() { return current_.serializedmessage(); }
+      virtual std::string value() { return current_.SerializeAsString(); }
       virtual bool valid() { return valid_; }
 
     private:
       bool valid_;
-      boost::hash<std::string> key_hash;
       google::protobuf::io::ZeroCopyInputStream* input_;
-      caffe::SerializedMessage current_;
+      caffe::Datum current_;
     };
 
     class PipeTransaction : public Transaction {
@@ -73,8 +66,8 @@ namespace caffe {
           string value = batch_.front();
           batch_.pop();
 
-          msg_.clear_serializedmessage();
-          msg_.set_serializedmessage(value);
+          // TODO(zen): remove overhead
+          msg_.ParseFromString(value);
           msg_.SerializeToZeroCopyStream(output_);
         }
       }
@@ -83,7 +76,7 @@ namespace caffe {
       int out_pipe_;
       google::protobuf::io::ZeroCopyOutputStream* output_;
       std::queue<std::string> batch_;
-      caffe::SerializedMessage msg_;
+      caffe::Datum msg_;
 
     DISABLE_COPY_AND_ASSIGN(PipeTransaction);
     };

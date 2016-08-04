@@ -3,7 +3,6 @@
 package com.foursquare.caffe.test
 
 import caffe.Caffe.Datum
-import caffe.Foursquare.SerializedMessage
 import collection.JavaConverters._
 import com.foursquare.caffe.jMRFeatureExtraction
 import com.google.protobuf.ByteString
@@ -14,8 +13,8 @@ import scala.io.Source
 
 object jMRFeatureExtractionTestApp extends App {
   val featureExtraction = new jMRFeatureExtraction
-  val outputStream = new FileOutputStream(featureExtraction.getOutputPipePath)
-  val inputStream = new FileInputStream(featureExtraction.getInputPipePath)
+  val outputStream = new FileOutputStream(featureExtraction.getInputPipePath)
+  val inputStream = new FileInputStream(featureExtraction.getOutputPipePath)
 
   featureExtraction.start(args(1), args(2))
 
@@ -32,19 +31,13 @@ object jMRFeatureExtractionTestApp extends App {
     .setWidth(img.getWidth)
     .setChannels(3)
     .build()
-  val serializedDatum = datum.toByteString.toStringUtf8
-  val serializedMessage = SerializedMessage.newBuilder
-    .setSerializedMessage(serializedDatum)
-    .build()
 
-  serializedMessage.writeTo(outputStream)
+  datum.writeTo(outputStream)
 
   // TODO(zen): add flush method to force sync.
   val ret = featureExtraction.stop()
 
-  val serializedResult = SerializedMessage.parseFrom(inputStream)
-  val serializedFeatures = serializedResult.getSerializedMessage
-  val featureDatum = Datum.parseFrom(ByteString.copyFromUtf8(serializedFeatures))
+  val featureDatum = Datum.parseFrom(inputStream)
 
   featureDatum.getFloatDataList.asScala.foreach(d => println(s"$d "))
 

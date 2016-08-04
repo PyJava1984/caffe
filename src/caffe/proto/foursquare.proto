@@ -1,7 +1,0 @@
-syntax = "proto2";
-
-package caffe;
-
-message SerializedMessage {
-  optional string serializedMessage = 1;
-}
