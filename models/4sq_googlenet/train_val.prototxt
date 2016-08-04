@@ -38,7 +38,7 @@ layer {
   data_param {
     source: "\\\\.\\pipe\\foursquare_pcv1_input_pipe"
     batch_size: 50
-    backend: Pipe
+    backend: PIPE
   }
 }
 layer {
