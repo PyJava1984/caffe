@@ -36,7 +36,7 @@ layer {
     mean_value: 123
   }
   data_param {
-    source: "\\\\.\\pipe\\foursquare_pcv1_input_pipe"
+    source: "/tmp/foursquare_pcv1_input_pipe"
     batch_size: 50
     backend: PIPE
   }
