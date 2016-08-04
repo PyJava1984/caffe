@@ -33,11 +33,11 @@ public:
   }
 
   const char* get_input_pipe_path() {
-    return "\\\\.\\pipe\\foursquare_pcv1_input_pipe";
+    return "/tmp/foursquare_pcv1_input_pipe";
   }
 
   const char* get_output_pipe_path() {
-    return "\\\\.\\pipe\\foursquare_pcv1_output_pipe";
+    return "/tmp/foursquare_pcv1_output_pipe";
   }
 
 private:
