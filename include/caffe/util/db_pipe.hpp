@@ -31,7 +31,7 @@ namespace caffe {
       explicit PipeCursor(std::string& source): current_to_nn_batch_index_(-1),
                                                 current_to_nn_batch_fd_(-1),
                                                 current_to_nn_batch_file_stream_(NULL) {
-        input_stream_.open(source.c_str());
+        input_stream_.open(source.c_str(), std::ios_base::in | std::ios_base::out);
 
         Next();
       }
@@ -62,15 +62,18 @@ namespace caffe {
     public:
       explicit PipeTransaction(std::string& source): current_from_nn_batch_id_(0),
                                                      current_from_nn_batch_fd_(-1) {
-        out_stream_.open(source.c_str());
+        out_stream_.open(source.c_str(), std::ios_base::in | std::ios_base::out);
       }
       virtual void Put(const std::string& key, const std::string& value) {
         batch_.push(value);
       }
       virtual void Commit();
+      ~PipeTransaction() {
+        out_stream_.close();
+      }
 
     private:
-      std::ofstream out_stream_;
+      std::fstream out_stream_;
       google::protobuf::io::ZeroCopyOutputStream* output_;
       std::queue<std::string> batch_;
       caffe::Datum msg_;

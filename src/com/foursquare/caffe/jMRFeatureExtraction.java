@@ -21,8 +21,8 @@ public class jMRFeatureExtraction {
 
   public jMRFeatureExtraction() throws Exception { }
 
-  public PrintWriter toNNWriter = new PrintWriter(new FileOutputStream(getInputPipePath()));
-  public Scanner fromNNReader = null;
+  public RandomAccessFile toNNFile = new RandomAccessFile(getInputPipePath(), "rw");
+  public RandomAccessFile fromNNFile = new RandomAccessFile(getOutputPipePath(), "rw");
 
   private int currentToNNBatchId = 0;
   private int currentToNNBatchIndex = -1;
@@ -32,7 +32,7 @@ public class jMRFeatureExtraction {
 
   public void writeDatum(Caffe.Datum datum) throws Exception {
     if (currentToNNBatchIndex == batchSize - 1) {
-      toNNWriter.println(currentToNNBatchFileNamePrefix + currentToNNBatchId);
+      toNNFile.write((currentToNNBatchFileNamePrefix + currentToNNBatchId + "\n").toBytes)
 
       currentToNNBatchIndex = -1;
       ++currentToNNBatchId;
@@ -51,12 +51,8 @@ public class jMRFeatureExtraction {
   private FileInputStream currentFromNNBatchFileStream = null;
 
   public Caffe.Datum readDatum() throws Exception {
-    if (fromNNReader == null) {
-      fromNNReader = new Scanner(new FileInputStream(getOutputPipePath()));
-    }
-
     if (currentFromNNBatchFileStream == null || currentFromNNBatchIndex == batchSize - 1) {
-      String fileName = fromNNReader.nextLine();
+      String fileName = fromNNFile.readLine();
 
       currentFromNNBatchIndex = -1;
 

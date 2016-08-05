@@ -64,6 +64,8 @@ namespace caffe {
       delete output;
       close(fd);
 
+      out_stream_ << file_name << "\n";
+
       if (commit_count > MRFeatureExtraction::get_batch_size()) {
         throw std::runtime_error("Batch size larger than batch size.");
       }

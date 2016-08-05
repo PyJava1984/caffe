@@ -12,9 +12,9 @@ import javax.imageio.ImageIO
 import scala.io.Source
 
 object jMRFeatureExtractionTestApp extends App {
+  val outputStream = new FileOutputStream(featureExtraction.getInputPipePath)
   val featureExtraction = new jMRFeatureExtraction
   // This is client side code, so the order is reversed.
-  val outputStream = new FileOutputStream(featureExtraction.getInputPipePath)
   val inputStream = new FileInputStream(featureExtraction.getOutputPipePath)
 
   featureExtraction.start(args(1), args(2))
