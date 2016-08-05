@@ -17,7 +17,7 @@ namespace caffe {
 
         current_to_nn_batch_index_ = -1;
 
-        if (current_to_nn_batch_file_stream_ != nullptr) {
+        if (current_to_nn_batch_file_stream_ != NULL) {
           delete current_to_nn_batch_file_stream_;
         }
 
