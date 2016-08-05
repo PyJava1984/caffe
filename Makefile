@@ -653,7 +653,6 @@ $(PY_PROTO_INIT): | $(PY_PROTO_BUILD_DIR)
 
 $(JAVA$(PROJECT)_SO): $(JAVA$(PROJECT)_SRC)
 	$(CXX) -shared -o .build_release/$@ $(JAVA$(PROJECT)_SRC) $(LINKFLAGS) $(JAVA_FLAGS) -L$(LIB_BUILD_DIR) -lcaffe
-	# @ echo
 	javac -d . -cp lib/protobuf-java-2.5.0.jar $(LIB_BUILD_DIR)/../src/caffe/proto/caffe/Caffe.java
 	jar cf $(LIB_BUILD_DIR)/caffe_protobuf.jar caffe/*
 	rm -r caffe
@@ -661,6 +660,7 @@ $(JAVA$(PROJECT)_SO): $(JAVA$(PROJECT)_SRC)
 	cp src/com/foursquare/caffe/jMRFeatureExtraction.java com/foursquare/caffe/
 	jar cf $(LIB_BUILD_DIR)/../$(JAVA$(PROJECT)_JAR) com/*
 	rm -r com
+	cp lib/protobuf-java-*.jar $(LIB_BUILD_DIR)
 
 clean:
 	@- $(RM) -rf $(ALL_BUILD_DIRS)
