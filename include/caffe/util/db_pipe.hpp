@@ -5,9 +5,11 @@
 #ifndef CAFFE_UTIL_DB_PIPE_HPP
 #define CAFFE_UTIL_DB_PIPE_HPP
 
-#include <string>
+#include <fstream>
 #include <queue>
 #include <stdexcept>
+#include <string>
+
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
@@ -18,31 +20,28 @@
 #include "caffe/util/db.hpp"
 #include "caffe/proto/caffe.pb.h"
 
+#include "mr_feature_extraction.hpp"
+
 namespace db=caffe::db;
 
 namespace caffe {
   namespace db {
     class PipeCursor : public Cursor {
     public:
-      explicit PipeCursor(int in_pipe) {
-        input_ = new google::protobuf::io::FileInputStream(in_pipe);
+      explicit PipeCursor(std::string& source): current_to_nn_batch_index_(-1),
+                                                current_to_nn_batch_fd_(-1),
+                                                current_to_nn_batch_file_stream_(nullptr) {
+        input_stream_.open(source);
 
-        const void* buffer;
-        int size;
-
-        valid_ = input_->Next(&buffer, &size);
+        Next();
       }
       ~PipeCursor() {
-        delete input_;
+        input_stream_.close();
+        delete current_to_nn_batch_file_stream_;
+        close(current_to_nn_batch_fd_);
       }
-      virtual void SeekToFirst() { }
-      virtual void Next() {
-        const void* buffer;
-        int size;
-
-        input_->Next(&buffer, &size);
-        current_.ParseFromZeroCopyStream(input_);
-      }
+      virtual void SeekToFirst() { } // TODO(zen): use ZeroCopyInputStream::BackUp
+      virtual void Next();
       virtual std::string key() {
         return "";
       }
@@ -51,48 +50,46 @@ namespace caffe {
 
     private:
       bool valid_;
-      google::protobuf::io::ZeroCopyInputStream* input_;
+      std::ifstream input_stream_;
       caffe::Datum current_;
+
+      int current_to_nn_batch_index_;
+      int current_to_nn_batch_fd_;
+      google::protobuf::io::ZeroCopyInputStream *current_to_nn_batch_file_stream_;
     };
 
     class PipeTransaction : public Transaction {
     public:
-      explicit PipeTransaction(int out_pipe) : out_pipe_(out_pipe) { }
+      explicit PipeTransaction(std::string& source): current_from_nn_batch_id_(0),
+                                                     current_from_nn_batch_fd_(-1) {
+        out_stream_.open(source.c_str());
+      }
       virtual void Put(const std::string& key, const std::string& value) {
         batch_.push(value);
       }
-      virtual void Commit() {
-        while(!batch_.empty()) {
-          string value = batch_.front();
-          batch_.pop();
-
-          // TODO(zen): remove overhead
-          msg_.ParseFromString(value);
-          msg_.SerializeToZeroCopyStream(output_);
-        }
-      }
+      virtual void Commit();
 
     private:
-      int out_pipe_;
+      std::ofstream out_stream_;
       google::protobuf::io::ZeroCopyOutputStream* output_;
       std::queue<std::string> batch_;
       caffe::Datum msg_;
+
+      int current_from_nn_batch_id_;
+      int current_from_nn_batch_fd_;
 
     DISABLE_COPY_AND_ASSIGN(PipeTransaction);
     };
 
     class Pipe : public DB {
     public:
-      Pipe() : pipe_(-1) { }
+      Pipe() { }
       virtual ~Pipe() { Close(); }
-      virtual void Open(const std::string& source, db::Mode mode);
-      virtual void Close() {
-        if (pipe_ != -1) {
-          close(pipe_);
-          pipe_ = -1;
-        }
-
+      virtual void Open(const std::string& source, db::Mode mode) {
+        source_ = source;
+        mode_ = mode;
       }
+      virtual void Close() { }
       virtual PipeCursor* NewCursor() {
         if (mode_ != db::READ) {
           std::ostringstream str_stream;
@@ -100,7 +97,7 @@ namespace caffe {
           throw std::runtime_error(str_stream.str());
         }
 
-        return new PipeCursor(pipe_);
+        return new PipeCursor(source_);
       }
       virtual PipeTransaction* NewTransaction() {
         if (mode_ != db::WRITE && mode_ != db::NEW) {
@@ -109,11 +106,11 @@ namespace caffe {
           throw std::runtime_error(str_stream.str());
         }
 
-        return new PipeTransaction(pipe_);
+        return new PipeTransaction(source_);
       }
 
     private:
-      int pipe_;
+      std::string source_;
       db::Mode mode_;
     };
   }  // namespace db

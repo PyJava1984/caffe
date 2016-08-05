@@ -40,6 +40,22 @@ public:
     return "/tmp/foursquare_pcv1_output_pipe";
   }
 
+  static const int get_batch_size() {
+    return 50;
+  }
+
+  static const std::string get_share_memory_fs_path() {
+    return std::string("/dev/shm");
+  }
+
+  static const std::string get_to_nn_batch_file_name_prefix() {
+    return std::string("foursquare_pcv1_in_");
+  }
+
+  static const std::string get_from_nn_batch_file_name_prefix() {
+    return std::string("foursquare_pcv1_out_");
+  }
+
 private:
   volatile bool stop_signal_;
 };

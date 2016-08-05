@@ -13,6 +13,7 @@ import scala.io.Source
 
 object jMRFeatureExtractionTestApp extends App {
   val featureExtraction = new jMRFeatureExtraction
+  // This is client side code, so the order is reversed.
   val outputStream = new FileOutputStream(featureExtraction.getInputPipePath)
   val inputStream = new FileInputStream(featureExtraction.getOutputPipePath)
 
@@ -20,19 +21,23 @@ object jMRFeatureExtractionTestApp extends App {
 
   val fileListPath = args(0)
   val source = Source.fromFile(fileListPath)
-  val fileList = source.getLines.toVector
+  val fileList = source.getLines
+
+  (0 until 50).foreach(idx => {
+    val f = fileList.next.split(' ')(0)
+    val img = ImageIO.read(new File(f))
+    val byteArray = img.getRaster.getDataBuffer.asInstanceOf[DataBufferByte].getData
+    val datum = Datum.newBuilder
+      .setData(ByteString.copyFrom(byteArray))
+      .setHeight(img.getHeight)
+      .setWidth(img.getWidth)
+      .setChannels(3)
+      .build()
+
+    datum.writeTo(outputStream)
+  })
+
   source.close
-
-  val img = ImageIO.read(new File(fileList.head))
-  val byteArray = img.getRaster.getDataBuffer.asInstanceOf[DataBufferByte].getData
-  val datum = Datum.newBuilder
-    .setData(ByteString.copyFrom(byteArray))
-    .setHeight(img.getHeight)
-    .setWidth(img.getWidth)
-    .setChannels(3)
-    .build()
-
-  datum.writeTo(outputStream)
 
   // TODO(zen): add flush method to force sync.
   val ret = featureExtraction.stop()
