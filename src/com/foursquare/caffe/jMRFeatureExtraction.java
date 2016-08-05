@@ -32,7 +32,7 @@ public class jMRFeatureExtraction {
 
   public void writeDatum(Caffe.Datum datum) throws Exception {
     if (currentToNNBatchIndex == batchSize - 1) {
-      toNNFile.write((currentToNNBatchFileNamePrefix + currentToNNBatchId + "\n").toBytes)
+      toNNFile.write((currentToNNBatchFileNamePrefix + currentToNNBatchId + "\n").toBytes);
 
       currentToNNBatchIndex = -1;
       ++currentToNNBatchId;
