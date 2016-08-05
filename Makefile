@@ -454,9 +454,9 @@ endif
 	py mat py$(PROJECT) mat$(PROJECT) proto runtest \
 	superclean supercleanlist supercleanfiles warn everything
 
-all: lib tools examples
+all: proto lib tools examples
 
-java: $(JAVA$(PROJECT)_SO)
+java:  $(JAVA$(PROJECT)_SO)
 
 lib: $(STATIC_NAME) $(DYNAMIC_NAME)
 
