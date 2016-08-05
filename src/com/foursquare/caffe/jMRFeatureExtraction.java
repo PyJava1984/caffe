@@ -22,7 +22,7 @@ public class jMRFeatureExtraction {
   public jMRFeatureExtraction() throws Exception { }
 
   public PrintWriter toNNWriter = new PrintWriter(new FileOutputStream(getInputPipePath()));
-  public Scanner fromNNReader = new Scanner(new FileInputStream(getOutputPipePath()));
+  public Scanner fromNNReader = null;
 
   private int currentToNNBatchId = 0;
   private int currentToNNBatchIndex = -1;
@@ -51,6 +51,10 @@ public class jMRFeatureExtraction {
   private FileInputStream currentFromNNBatchFileStream = null;
 
   public Caffe.Datum readDatum() throws Exception {
+    if (fromNNReader == null) {
+      fromNNReader = new Scanner(new FileInputStream(getOutputPipePath()));
+    }
+
     if (currentFromNNBatchFileStream == null || currentFromNNBatchIndex == batchSize - 1) {
       String fileName = fromNNReader.nextLine();
 
