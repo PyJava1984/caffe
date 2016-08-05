@@ -31,7 +31,7 @@ namespace caffe {
       explicit PipeCursor(std::string& source): current_to_nn_batch_index_(-1),
                                                 current_to_nn_batch_fd_(-1),
                                                 current_to_nn_batch_file_stream_(NULL) {
-        input_stream_.open(source);
+        input_stream_.open(source.c_str());
 
         Next();
       }

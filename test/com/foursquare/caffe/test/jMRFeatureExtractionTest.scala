@@ -34,7 +34,7 @@ object jMRFeatureExtractionTestApp extends App {
       .setChannels(3)
       .build()
 
-    datum.writeTo(outputStream)
+    featureExtraction.writeDatum(datum)
   })
 
   source.close
@@ -42,7 +42,7 @@ object jMRFeatureExtractionTestApp extends App {
   // TODO(zen): add flush method to force sync.
   val ret = featureExtraction.stop()
 
-  val featureDatum = Datum.parseFrom(inputStream)
+  val featureDatum = featureExtraction.readDatum()
 
   featureDatum.getFloatDataList.asScala.foreach(d => println(s"$d "))
 
