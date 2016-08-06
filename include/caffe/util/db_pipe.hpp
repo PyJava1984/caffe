@@ -51,7 +51,9 @@ namespace caffe {
       virtual void SeekToFirst() { } // TODO(zen): use ZeroCopyInputStream::BackUp
       virtual void Next();
       virtual std::string key() {
-        return std::to_string(fake_key_++);
+        char buf[32];
+        ::sprintf(buf, "%ld", fake_key_);
+        return std::string(buf);
       }
       virtual std::string value() {
         string out;
