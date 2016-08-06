@@ -39,6 +39,8 @@ namespace caffe {
       }
 
       valid_ = current_.ParseFromZeroCopyStream(current_to_nn_batch_file_stream_);
+      LOG(ERROR) << "Channles " << current_.channels();
+
       if (!valid_) {
         current_to_nn_batch_index_ = MRFeatureExtraction::get_batch_size() - 1;
       } else {
