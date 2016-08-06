@@ -12,8 +12,11 @@ namespace caffe {
   namespace db {
     void PipeCursor::Next() {
       if (current_to_nn_batch_index_ == MRFeatureExtraction::get_batch_size() - 1) {
-        std::string file_name;
-        std::getline(input_stream_, file_name);
+        size_t nbytes = 255;
+        char* file_name = (char *)malloc(nbytes + 1);
+
+	LOG(ERROR) << "Trying to get file name";
+        ::getline(&file_name, &nbytes, input_file_);
 
         current_to_nn_batch_index_ = -1;
 
@@ -25,7 +28,10 @@ namespace caffe {
           close(current_to_nn_batch_fd_);
         }
 
-        current_to_nn_batch_fd_ = open(file_name.c_str(), O_RDONLY);
+        current_to_nn_batch_fd_ = open(file_name, O_RDONLY);
+
+        LOG(ERROR) << "Opening to nn batch file " << file_name;
+        free(file_name);
         current_to_nn_batch_file_stream_ =
             new google::protobuf::io::FileInputStream(current_to_nn_batch_fd_);
       }
@@ -64,7 +70,11 @@ namespace caffe {
       delete output;
       close(fd);
 
-      out_stream_ << file_name << "\n";
+      stringstream buf_ss;
+      buf_ss << file_name << "\n";
+      std::string buf = buf_ss.str();
+
+      write(out_fd_, buf.c_str(), buf.length() + 1);
 
       if (commit_count > MRFeatureExtraction::get_batch_size()) {
         throw std::runtime_error("Batch size larger than batch size.");

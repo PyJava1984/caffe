@@ -10,6 +10,10 @@
 #include <stdexcept>
 #include <string>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
@@ -31,12 +35,15 @@ namespace caffe {
       explicit PipeCursor(std::string& source): current_to_nn_batch_index_(-1),
                                                 current_to_nn_batch_fd_(-1),
                                                 current_to_nn_batch_file_stream_(NULL) {
-        input_stream_.open(source.c_str(), std::ios_base::in | std::ios_base::out);
+        LOG(ERROR) << "Opening pipe " << source;
+        input_fd_ = open(source.c_str(), O_RDWR);
+        input_file_ = fdopen(input_fd_, "rw");
 
         Next();
       }
       ~PipeCursor() {
-        input_stream_.close();
+        fclose(input_file_);
+        close(input_fd_);
         delete current_to_nn_batch_file_stream_;
         close(current_to_nn_batch_fd_);
       }
@@ -50,7 +57,8 @@ namespace caffe {
 
     private:
       bool valid_;
-      std::ifstream input_stream_;
+      int input_fd_;
+      FILE* input_file_;
       caffe::Datum current_;
 
       int current_to_nn_batch_index_;
@@ -62,18 +70,18 @@ namespace caffe {
     public:
       explicit PipeTransaction(std::string& source): current_from_nn_batch_id_(0),
                                                      current_from_nn_batch_fd_(-1) {
-        out_stream_.open(source.c_str(), std::ios_base::in | std::ios_base::out);
+        out_fd_ = open(source.c_str(), O_RDWR);
       }
       virtual void Put(const std::string& key, const std::string& value) {
         batch_.push(value);
       }
       virtual void Commit();
       ~PipeTransaction() {
-        out_stream_.close();
+        close(out_fd_);
       }
 
     private:
-      std::fstream out_stream_;
+      int out_fd_;
       google::protobuf::io::ZeroCopyOutputStream* output_;
       std::queue<std::string> batch_;
       caffe::Datum msg_;
@@ -86,7 +94,9 @@ namespace caffe {
 
     class Pipe : public DB {
     public:
-      Pipe() { }
+      Pipe() {
+        LOG(ERROR) << "Opening pipe db";
+      }
       virtual ~Pipe() { Close(); }
       virtual void Open(const std::string& source, db::Mode mode) {
         source_ = source;
