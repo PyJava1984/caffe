@@ -11,7 +11,9 @@ namespace db=caffe::db;
 namespace caffe {
   namespace db {
     void PipeCursor::Next() {
-      if (current_to_nn_batch_index_ == MRFeatureExtraction::get_batch_size() - 1) {
+      if (current_to_nn_batch_file_stream_ == NULL ||
+        current_to_nn_batch_index_ == MRFeatureExtraction::get_batch_size() - 1
+      ) {
         size_t nbytes = 255;
         char* file_name = (char *)malloc(nbytes + 1);
 
