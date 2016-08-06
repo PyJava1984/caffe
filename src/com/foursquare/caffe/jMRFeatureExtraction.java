@@ -16,7 +16,6 @@ public class jMRFeatureExtraction {
   public native String getInputPipePath();
   public native String getOutputPipePath();
 
-  public final static String shareMemoryFsPath = "/dev/shm";
   public final static int batchSize = 50;
 
   public jMRFeatureExtraction() throws Exception { }
@@ -26,7 +25,7 @@ public class jMRFeatureExtraction {
 
   private int currentToNNBatchId = 0;
   private int currentToNNBatchIndex = -1;
-  private String currentToNNBatchFileNamePrefix = "foursquare_pcv1_in_";
+  private String currentToNNBatchFileNamePrefix = "/dev/shm/foursquare_pcv1_in_";
   private FileOutputStream currentToNNBatchFileStream =
     new FileOutputStream(shareMemoryFsPath + "/" + currentToNNBatchFileNamePrefix + currentToNNBatchId);
 
