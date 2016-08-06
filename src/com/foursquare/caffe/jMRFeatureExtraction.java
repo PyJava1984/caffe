@@ -27,7 +27,7 @@ public class jMRFeatureExtraction {
   private int currentToNNBatchIndex = -1;
   private String currentToNNBatchFileNamePrefix = "/dev/shm/foursquare_pcv1_in_";
   private FileOutputStream currentToNNBatchFileStream =
-    new FileOutputStream(shareMemoryFsPath + "/" + currentToNNBatchFileNamePrefix + currentToNNBatchId);
+    new FileOutputStream(currentToNNBatchFileNamePrefix + currentToNNBatchId);
 
   public void writeDatum(Caffe.Datum datum) throws Exception {
     if (currentToNNBatchIndex == batchSize - 1) {
