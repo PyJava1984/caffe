@@ -12,10 +12,7 @@ import javax.imageio.ImageIO
 import scala.io.Source
 
 object jMRFeatureExtractionTestApp extends App {
-  val outputStream = new FileOutputStream(featureExtraction.getInputPipePath)
   val featureExtraction = new jMRFeatureExtraction
-  // This is client side code, so the order is reversed.
-  val inputStream = new FileInputStream(featureExtraction.getOutputPipePath)
 
   featureExtraction.start(args(1), args(2))
 
@@ -23,7 +20,7 @@ object jMRFeatureExtractionTestApp extends App {
   val source = Source.fromFile(fileListPath)
   val fileList = source.getLines
 
-  (0 until 50).foreach(idx => {
+  (0 until 1).foreach(idx => {
     val f = fileList.next.split(' ')(0)
     val img = ImageIO.read(new File(f))
     val byteArray = img.getRaster.getDataBuffer.asInstanceOf[DataBufferByte].getData

@@ -32,12 +32,12 @@ public class jMRFeatureExtraction {
 
   public void writeDatum(Caffe.Datum datum) throws Exception {
     if (currentToNNBatchIndex == batchSize - 1) {
+      currentToNNBatchFileStream.close();
       toNNFile.write((currentToNNBatchFileNamePrefix + currentToNNBatchId + "\n").getBytes());
 
       currentToNNBatchIndex = -1;
       ++currentToNNBatchId;
 
-      currentToNNBatchFileStream.close();
       currentToNNBatchFileStream =
         new FileOutputStream(currentToNNBatchFileNamePrefix + currentToNNBatchId);
     }
@@ -52,11 +52,14 @@ public class jMRFeatureExtraction {
 
   public Caffe.Datum readDatum() throws Exception {
     if (currentFromNNBatchFileStream == null || currentFromNNBatchIndex == batchSize - 1) {
-      String fileName = fromNNFile.readLine();
+      if (currentFromNNBatchFileStream != null) {
+        currentFromNNBatchFileStream.close();
+      }
 
       currentFromNNBatchIndex = -1;
 
-      currentFromNNBatchFileStream.close();
+      String fileName = fromNNFile.readLine();
+
       currentFromNNBatchFileStream = new FileInputStream(fileName);
     }
 
