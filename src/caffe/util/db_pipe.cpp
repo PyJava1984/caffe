@@ -10,6 +10,8 @@ namespace db=caffe::db;
 
 namespace caffe {
   namespace db {
+    long PipeCursor::fake_key_ = 0l;
+
     void PipeCursor::Next() {
       if (current_to_nn_batch_file_stream_ == NULL ||
         current_to_nn_batch_index_ == MRFeatureExtraction::get_batch_size() - 1
@@ -17,7 +19,7 @@ namespace caffe {
         size_t nbytes = 255;
         char* file_name = (char *)malloc(nbytes + 1);
 
-	LOG(ERROR) << "Trying to get file name";
+	      LOG(ERROR) << "Trying to get file name";
         ::getline(&file_name, &nbytes, input_file_);
 
         current_to_nn_batch_index_ = -1;
@@ -35,7 +37,7 @@ namespace caffe {
         LOG(ERROR) << "Opening to nn batch file " << file_name;
         free(file_name);
         current_to_nn_batch_file_stream_ =
-            new google::protobuf::io::FileInputStream(current_to_nn_batch_fd_);
+          new google::protobuf::io::FileInputStream(current_to_nn_batch_fd_);
       }
 
       valid_ = current_.ParseFromZeroCopyStream(current_to_nn_batch_file_stream_);

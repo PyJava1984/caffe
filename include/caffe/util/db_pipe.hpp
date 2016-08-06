@@ -5,6 +5,7 @@
 #ifndef CAFFE_UTIL_DB_PIPE_HPP
 #define CAFFE_UTIL_DB_PIPE_HPP
 
+#include <cstdlib>
 #include <fstream>
 #include <queue>
 #include <stdexcept>
@@ -50,10 +51,17 @@ namespace caffe {
       virtual void SeekToFirst() { } // TODO(zen): use ZeroCopyInputStream::BackUp
       virtual void Next();
       virtual std::string key() {
-        return "";
+        return std::to_string(fake_key_++);
       }
-      virtual std::string value() { return current_.SerializeAsString(); }
+      virtual std::string value() {
+        string out;
+        current_.SerializeToString(&out);
+        return out;
+      }
       virtual bool valid() { return valid_; }
+
+    private:
+      static long fake_key_;
 
     private:
       bool valid_;

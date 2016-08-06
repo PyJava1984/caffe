@@ -20,7 +20,7 @@ object jMRFeatureExtractionTestApp extends App {
   val source = Source.fromFile(fileListPath)
   val fileList = source.getLines
 
-  (0 until 1).foreach(idx => {
+  (0 until 50).foreach(idx => {
     val f = fileList.next.split(' ')(0)
     val img = ImageIO.read(new File(f))
     val byteArray = img.getRaster.getDataBuffer.asInstanceOf[DataBufferByte].getData
