@@ -26,8 +26,8 @@ public class jMRFeatureExtraction {
   private int currentToNNBatchId = 0;
   private int currentToNNBatchIndex = -1;
   private String currentToNNBatchFileNamePrefix = "/dev/shm/foursquare_pcv1_in_";
-  private FileOutputStream currentToNNBatchFileStream =
-    new FileOutputStream(currentToNNBatchFileNamePrefix + currentToNNBatchId);
+  private PrintWriter currentToNNBatchFileStream =
+    new PrintWriter(currentToNNBatchFileNamePrefix + currentToNNBatchId);
 
   public void writeDatum(Caffe.Datum datum) throws Exception {
     if (currentToNNBatchIndex == batchSize - 1) {
@@ -40,13 +40,11 @@ public class jMRFeatureExtraction {
       currentToNNBatchFileStream =
         new FileOutputStream(currentToNNBatchFileNamePrefix + currentToNNBatchId);
     }
-
-    datum.writeTo(currentToNNBatchFileStream);
+    currentToNNBatchFileStream.println(datum.toByteString().toStringUtf8());
     ++currentToNNBatchIndex;
   }
 
   private int currentFromNNBatchIndex = -1;
-  private String currentFromNNBatchFileNamePrefix = "foursquare_pcv1_out_";
   private FileInputStream currentFromNNBatchFileStream = null;
 
   public Caffe.Datum readDatum() throws Exception {
@@ -62,7 +60,8 @@ public class jMRFeatureExtraction {
       currentFromNNBatchFileStream = new FileInputStream(fileName);
     }
 
-    Caffe.Datum datum = Caffe.Datum.parseFrom(currentFromNNBatchFileStream);
+    String line = currentFromNNBatchFileStream.readLine();
+    Caffe.Datum datum = Caffe.Datum.parseFrom(ByteString.copyFromUtf8(line));
 
     if (datum == null) {
       currentFromNNBatchIndex = batchSize - 1;
