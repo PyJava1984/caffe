@@ -35,6 +35,7 @@ namespace caffe {
     public:
       explicit PipeCursor(std::string& source): current_to_nn_batch_index_(-1),
                                                 current_to_nn_batch_fd_(-1),
+                                                current_to_nn_batch_raw_stream_(NULL),
                                                 current_to_nn_batch_file_stream_(NULL) {
         LOG(ERROR) << "Opening pipe " << source;
         input_fd_ = open(source.c_str(), O_RDWR);
@@ -46,6 +47,7 @@ namespace caffe {
         fclose(input_file_);
         close(input_fd_);
         delete current_to_nn_batch_file_stream_;
+        delete current_to_nn_batch_raw_stream_;
         close(current_to_nn_batch_fd_);
       }
       virtual void SeekToFirst() { } // TODO(zen): use ZeroCopyInputStream::BackUp
@@ -73,7 +75,8 @@ namespace caffe {
 
       int current_to_nn_batch_index_;
       int current_to_nn_batch_fd_;
-      google::protobuf::io::ZeroCopyInputStream *current_to_nn_batch_file_stream_;
+      google::protobuf::io::ZeroCopyInputStream *current_to_nn_batch_raw_stream_;
+      google::protobuf::io::CodedInputStream *current_to_nn_batch_file_stream_;
     };
 
     class PipeTransaction : public Transaction {

@@ -1,6 +1,7 @@
 //
 // Created by Zengpan Fan on 8/2/16.
 //
+#include <fstream>
 #include <string>
 #include <cstdlib>
 #include <fcntl.h>
@@ -24,6 +25,10 @@ namespace caffe {
 
         current_to_nn_batch_index_ = -1;
 
+        if (current_to_nn_batch_raw_stream_ != NULL) {
+          delete current_to_nn_batch_raw_stream_;
+        }
+
         if (current_to_nn_batch_file_stream_ != NULL) {
           delete current_to_nn_batch_file_stream_;
         }
@@ -36,11 +41,13 @@ namespace caffe {
 
         LOG(ERROR) << "Opening to nn batch file " << file_name;
         free(file_name);
-        current_to_nn_batch_file_stream_ =
+        current_to_nn_batch_raw_stream_ =
           new google::protobuf::io::FileInputStream(current_to_nn_batch_fd_);
+        current_to_nn_batch_file_stream_ =
+            new google::protobuf::io::CodedInputStream(current_to_nn_batch_raw_stream_);
       }
 
-      valid_ = current_.ParseFromZeroCopyStream(current_to_nn_batch_file_stream_);
+      valid_ = current_.ParseFromCodedStream(current_to_nn_batch_file_stream_);
       LOG(ERROR) << "Channles " << current_.channels();
 
       if (!valid_) {
@@ -59,8 +66,8 @@ namespace caffe {
          << MRFeatureExtraction::get_from_nn_batch_file_name_prefix()
          << current_from_nn_batch_id_;
       std::string file_name = ss.str();
-      int fd = open(file_name.c_str(), O_WRONLY | O_CREAT);
-      google::protobuf::io::ZeroCopyOutputStream* output = new google::protobuf::io::FileOutputStream(fd);
+      std::ofstream output;
+      output.open(file_name);
 
       while(!batch_.empty()) {
         string value = batch_.front();
@@ -68,13 +75,12 @@ namespace caffe {
 
         // TODO(zen): remove overhead
         msg_.ParseFromString(value);
-        msg_.SerializeToZeroCopyStream(output);
+        msg_.SerializeToOstream(&output);
 
         ++commit_count;
       }
 
-      delete output;
-      close(fd);
+      output.close();
 
       stringstream buf_ss;
       buf_ss << file_name << "\n";
