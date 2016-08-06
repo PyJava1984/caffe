@@ -67,7 +67,7 @@ namespace caffe {
          << current_from_nn_batch_id_;
       std::string file_name = ss.str();
       std::ofstream output;
-      output.open(file_name);
+      output.open(file_name.c_str());
 
       while(!batch_.empty()) {
         string value = batch_.front();
