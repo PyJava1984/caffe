@@ -83,7 +83,8 @@ namespace caffe {
         char* file_name = (char *)malloc(nbytes + 1);
 
 	      LOG(ERROR) << "Trying to get file name";
-        ::getline(&file_name, &nbytes, input_file_);
+        ssize_t msg_size = ::getline(&file_name, &nbytes, input_file_);
+        LOG(ERROR) << msg_size;
 
         current_to_nn_batch_index_ = -1;
 
