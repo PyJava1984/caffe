@@ -7,6 +7,7 @@
 
 #include <cstdlib>
 #include <fstream>
+#include <mutex>
 #include <queue>
 #include <stdexcept>
 #include <string>
@@ -36,7 +37,7 @@ namespace caffe {
         google::protobuf::io::ZeroCopyOutputStream* rawOutput
     );
 
-    bool readDelimitedFrom(
+    int readDelimitedFrom(
         google::protobuf::io::ZeroCopyInputStream* rawInput,
         google::protobuf::MessageLite* message
     );
@@ -44,12 +45,13 @@ namespace caffe {
     class PipeCursor : public Cursor {
     public:
       explicit PipeCursor(std::string& source): file_name_(NULL),
-                                                current_to_nn_batch_index_(-1),
                                                 current_to_nn_batch_fd_(-1),
                                                 current_to_nn_batch_stream_(NULL) {
         LOG(ERROR) << "Opening pipe " << source;
         input_fd_ = open(source.c_str(), O_RDWR);
         input_file_ = fdopen(input_fd_, "rw");
+
+        open_to_nn_batch_stream();
 
         Next();
       }
@@ -71,28 +73,32 @@ namespace caffe {
       virtual void SeekToFirst() { } // TODO(zen): use ZeroCopyInputStream::BackUp
       virtual void Next();
       virtual std::string key() {
-        char buf[32];
-        ::sprintf(buf, "%ld", fake_key_);
-        return std::string(buf);
+        ostringstream ss;
+        ss << fake_key_;
+        return ss.str();
       }
       virtual std::string value() {
         string out;
         current_.SerializeToString(&out);
         return out;
       }
-      virtual bool valid() { return valid_; }
+      virtual bool valid() { return error_no_ >= 0; } // Next() will handle the recoverable errors like eof
+
+    private:
+      // Will delete the previous file
+      void open_to_nn_batch_stream();
 
     private:
       static long fake_key_;
 
     private:
-      bool valid_;
+      int error_no_;
       int input_fd_;
       char* file_name_;
       FILE* input_file_;
       caffe::Datum current_;
+      std::mutex current_to_nn_batch_stream_lock_;
 
-      int current_to_nn_batch_index_;
       int current_to_nn_batch_fd_;
       google::protobuf::io::ZeroCopyInputStream *current_to_nn_batch_stream_;
     };

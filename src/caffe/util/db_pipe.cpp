@@ -2,8 +2,6 @@
 // Created by Zengpan Fan on 8/2/16.
 //
 #include <fstream>
-#include <string>
-#include <cstdlib>
 #include <fcntl.h>
 #include "caffe/util/db_pipe.hpp"
 
@@ -36,7 +34,7 @@ namespace caffe {
       return true;
     }
 
-    bool readDelimitedFrom(
+    int readDelimitedFrom(
       google::protobuf::io::ZeroCopyInputStream* rawInput,
       google::protobuf::MessageLite* message
     ) {
@@ -48,66 +46,69 @@ namespace caffe {
 
       // Read the size.
       uint32_t size;
-      if (!input.ReadVarint32(&size)) return false;
+      if (!input.ReadVarint32(&size)) return 1; // eof
 
       // Tell the stream not to read beyond that size.
       google::protobuf::io::CodedInputStream::Limit limit =
           input.PushLimit(size);
 
       // Parse the message.
-      if (!message->MergeFromCodedStream(&input)) return false;
-      if (!input.ConsumedEntireMessage()) return false;
+      if (!message->MergeFromCodedStream(&input)) return -1;
+      if (!input.ConsumedEntireMessage()) return -1;
 
       // Release the limit.
       input.PopLimit(limit);
 
-      return true;
+      return 0;
     }
 
     long PipeCursor::fake_key_ = 0l;
 
-    void PipeCursor::Next() {
-      if (current_to_nn_batch_stream_ == NULL ||
-        current_to_nn_batch_index_ == MRFeatureExtraction::get_batch_size() - 1
-      ) {
-        if (current_to_nn_batch_stream_ != NULL) {
-          delete current_to_nn_batch_stream_;
+    // Will delete the previous file
+    void PipeCursor::open_to_nn_batch_stream() {
+      current_to_nn_batch_stream_lock_.lock();
 
-          if (file_name_ != NULL) {
-            std::remove(file_name_);
-            free(file_name_);
-          }
-        }
-
-        size_t nbytes = 255;
-        char* file_name = (char *)malloc(nbytes + 1);
-
-	      LOG(ERROR) << "Trying to get file name";
-        ssize_t msg_size = ::getline(&file_name, &nbytes, input_file_);
-        LOG(ERROR) << msg_size;
-
-        current_to_nn_batch_index_ = -1;
-
-        if (current_to_nn_batch_fd_ != -1) {
-          close(current_to_nn_batch_fd_);
-        }
-
-        current_to_nn_batch_fd_ = open(file_name, O_RDONLY);
-
-        LOG(ERROR) << "Opening to nn batch file " << file_name;
-
-        current_to_nn_batch_stream_ =
-          new google::protobuf::io::FileInputStream(current_to_nn_batch_fd_);
+      if (current_to_nn_batch_stream_ != NULL) {
+        delete current_to_nn_batch_stream_;
       }
 
-      valid_ = readDelimitedFrom(current_to_nn_batch_stream_, &current_);
+      if (file_name_ != NULL) {
+        std::remove(file_name_);
+        free(file_name_);
+      }
 
-      LOG(ERROR) << "Channles " << current_.channels();
+      size_t nbytes = 255;
+      file_name_ = (char *)malloc(nbytes + 1);
 
-      if (!valid_) {
-        current_to_nn_batch_index_ = MRFeatureExtraction::get_batch_size() - 1;
+      LOG(ERROR) << "Trying to get file name";
+      ::getline(&file_name_, &nbytes, input_file_);
+
+      if (current_to_nn_batch_fd_ != -1) {
+        close(current_to_nn_batch_fd_);
+      }
+
+      current_to_nn_batch_fd_ = open(file_name_, O_RDONLY);
+
+      LOG(ERROR) << "Opening to nn batch file " << file_name_;
+
+      current_to_nn_batch_stream_ =
+          new google::protobuf::io::FileInputStream(current_to_nn_batch_fd_);
+
+      current_to_nn_batch_stream_lock_.unlock();
+    }
+
+    void PipeCursor::Next() {
+      error_no_ = readDelimitedFrom(current_to_nn_batch_stream_, &current_);
+
+      if (error_no_ == 0) {
+        LOG(ERROR) << "Channles " << current_.channels();
       } else {
-        ++current_to_nn_batch_index_;
+        if (error_no_ == 1) { // Treat the underlying pipe as a stream
+          open_to_nn_batch_stream();
+          Next();
+        } else {
+          LOG(ERROR) << "Invalid read " << "@" << fake_key_;
+        }
       }
     }
 
