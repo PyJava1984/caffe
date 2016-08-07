@@ -4,9 +4,11 @@
 
 #include <string>
 #include <vector>
+#include <boost/algorithm/string.hpp>
 
-#include "boost/algorithm/string.hpp"
-#include "google/protobuf/text_format.h"
+#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/text_format.h>
+#include <caffe/util/db_pipe.hpp>
 
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
@@ -80,14 +82,14 @@ int MRFeatureExtraction::feature_extraction_pipeline(
   }
 
   LOG(INFO)<< "Opening pipe " << target_pipe_path;
-  boost::shared_ptr<db::DB> feature_db(db::GetDB("pipe"));
+  boost::shared_ptr<db::Pipe> feature_db(new db::Pipe());
   feature_db->Open(target_pipe_path, db::READ);
 
   size_t num_features = blob_names.size();
 
-  std::vector<boost::shared_ptr<db::Transaction> > txns;
+  std::vector<boost::shared_ptr<db::PipeTransaction> > txns;
   for (size_t i = 0; i < num_features; ++i) {
-    boost::shared_ptr<db::Transaction> txn(feature_db->NewTransaction());
+    boost::shared_ptr<db::PipeTransaction> txn(feature_db->NewTransaction());
     txns.push_back(txn);
   }
 
@@ -117,11 +119,8 @@ int MRFeatureExtraction::feature_extraction_pipeline(
         for (int d = 0; d < dim_features; ++d) {
           datum.add_float_data(feature_blob_data[d]);
         }
-        string key_str = caffe::format_int(image_indices[i], 10);
 
-        string out;
-        CHECK(datum.SerializeToString(&out));
-        txns.at(i)->Put(key_str, out);
+        txns.at(i)->Put(datum);
         ++image_indices[i];
         if (image_indices[i] % mini_batch_size == 0) {
           txns.at(i)->Commit();

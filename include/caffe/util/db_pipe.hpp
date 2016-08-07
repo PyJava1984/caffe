@@ -31,12 +31,22 @@ namespace db=caffe::db;
 
 namespace caffe {
   namespace db {
+    bool writeDelimitedTo(
+        const google::protobuf::MessageLite& message,
+        google::protobuf::io::ZeroCopyOutputStream* rawOutput
+    );
+
+    bool readDelimitedFrom(
+        google::protobuf::io::ZeroCopyInputStream* rawInput,
+        google::protobuf::MessageLite* message
+    );
+
     class PipeCursor : public Cursor {
     public:
-      explicit PipeCursor(std::string& source): current_to_nn_batch_index_(-1),
+      explicit PipeCursor(std::string& source): file_name_(NULL),
+                                                current_to_nn_batch_index_(-1),
                                                 current_to_nn_batch_fd_(-1),
-                                                current_to_nn_batch_raw_stream_(NULL),
-                                                current_to_nn_batch_file_stream_(NULL) {
+                                                current_to_nn_batch_stream_(NULL) {
         LOG(ERROR) << "Opening pipe " << source;
         input_fd_ = open(source.c_str(), O_RDWR);
         input_file_ = fdopen(input_fd_, "rw");
@@ -46,8 +56,16 @@ namespace caffe {
       ~PipeCursor() {
         fclose(input_file_);
         close(input_fd_);
-        delete current_to_nn_batch_file_stream_;
-        delete current_to_nn_batch_raw_stream_;
+
+        if (file_name_ != NULL) {
+          std::remove(file_name_);
+          free(file_name_);
+        }
+
+        if (current_to_nn_batch_stream_ != NULL) {
+          delete current_to_nn_batch_stream_;
+        }
+
         close(current_to_nn_batch_fd_);
       }
       virtual void SeekToFirst() { } // TODO(zen): use ZeroCopyInputStream::BackUp
@@ -70,13 +88,13 @@ namespace caffe {
     private:
       bool valid_;
       int input_fd_;
+      char* file_name_;
       FILE* input_file_;
       caffe::Datum current_;
 
       int current_to_nn_batch_index_;
       int current_to_nn_batch_fd_;
-      google::protobuf::io::ZeroCopyInputStream *current_to_nn_batch_raw_stream_;
-      google::protobuf::io::CodedInputStream *current_to_nn_batch_file_stream_;
+      google::protobuf::io::ZeroCopyInputStream *current_to_nn_batch_stream_;
     };
 
     class PipeTransaction : public Transaction {
@@ -86,8 +104,15 @@ namespace caffe {
         out_fd_ = open(source.c_str(), O_RDWR);
       }
       virtual void Put(const std::string& key, const std::string& value) {
+        caffe::Datum msg;
+        msg.ParseFromString(value);
+        Put(msg);
+      }
+
+      void Put(const caffe::Datum& value) {
         batch_.push(value);
       }
+
       virtual void Commit();
       ~PipeTransaction() {
         close(out_fd_);
@@ -96,8 +121,7 @@ namespace caffe {
     private:
       int out_fd_;
       google::protobuf::io::ZeroCopyOutputStream* output_;
-      std::queue<std::string> batch_;
-      caffe::Datum msg_;
+      std::queue<caffe::Datum> batch_;
 
       int current_from_nn_batch_id_;
       int current_from_nn_batch_fd_;
