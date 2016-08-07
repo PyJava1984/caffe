@@ -45,10 +45,11 @@ namespace caffe {
 
     class PipeCursor : public Cursor {
     public:
-      explicit PipeCursor(std::string& source): error_no_(1),
-                                                file_name_(NULL),
+      explicit PipeCursor(std::string& source): file_name_(NULL),
                                                 current_to_nn_batch_fd_(-1),
                                                 current_to_nn_batch_stream_(NULL) {
+        error_no_ = 1;
+
         LOG(ERROR) << "Opening pipe " << source;
         input_fd_ = open(source.c_str(), O_RDWR);
         input_file_ = fdopen(input_fd_, "rw");

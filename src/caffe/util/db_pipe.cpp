@@ -62,7 +62,7 @@ namespace caffe {
       return 0;
     }
 
-    long PipeCursor::fake_key_ = 0l;
+    std::atomic<long> PipeCursor::fake_key_(0l);
 
     // Will delete the previous file
     void PipeCursor::open_to_nn_batch_stream() {
