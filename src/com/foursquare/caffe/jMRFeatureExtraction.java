@@ -48,7 +48,7 @@ public class jMRFeatureExtraction {
 
   private int currentFromNNBatchIndex = -1;
   private String fileName = null;
-  private BufferedReader currentFromNNBatchFileStream = null;
+  private FileInputStream currentFromNNBatchFileStream = null;
 
   public Caffe.Datum readDatum() throws Exception {
     if (currentFromNNBatchFileStream == null || currentFromNNBatchIndex == batchSize - 1) {
@@ -64,11 +64,10 @@ public class jMRFeatureExtraction {
 
       fileName = fromNNFile.readLine();
 
-      currentFromNNBatchFileStream = new BufferedReader(new FileReader(fileName));
+      currentFromNNBatchFileStream = new FileInputStream(fileName);
     }
 
-    String line = currentFromNNBatchFileStream.readLine();
-    Caffe.Datum datum = Caffe.Datum.parseFrom(ByteString.copyFromUtf8(line));
+    Caffe.Datum datum = Caffe.Datum.parseDelimitedFrom(currentFromNNBatchFileStream);
 
     if (datum == null) {
       currentFromNNBatchIndex = batchSize - 1;
