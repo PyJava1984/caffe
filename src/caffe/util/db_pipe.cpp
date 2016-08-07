@@ -68,6 +68,10 @@ namespace caffe {
     void PipeCursor::open_to_nn_batch_stream() {
       current_to_nn_batch_stream_lock_.lock();
 
+      if (error_no_ == 0) {
+        return;
+      }
+
       if (current_to_nn_batch_stream_ != NULL) {
         delete current_to_nn_batch_stream_;
       }
@@ -93,6 +97,8 @@ namespace caffe {
 
       current_to_nn_batch_stream_ =
           new google::protobuf::io::FileInputStream(current_to_nn_batch_fd_);
+
+      error_no_ = 0;
 
       current_to_nn_batch_stream_lock_.unlock();
     }

@@ -5,6 +5,7 @@
 #ifndef CAFFE_UTIL_DB_PIPE_HPP
 #define CAFFE_UTIL_DB_PIPE_HPP
 
+#include <atomic>
 #include <cstdlib>
 #include <fstream>
 #include <mutex>
@@ -44,7 +45,8 @@ namespace caffe {
 
     class PipeCursor : public Cursor {
     public:
-      explicit PipeCursor(std::string& source): file_name_(NULL),
+      explicit PipeCursor(std::string& source): error_no_(1),
+                                                file_name_(NULL),
                                                 current_to_nn_batch_fd_(-1),
                                                 current_to_nn_batch_stream_(NULL) {
         LOG(ERROR) << "Opening pipe " << source;
@@ -89,10 +91,10 @@ namespace caffe {
       void open_to_nn_batch_stream();
 
     private:
-      static long fake_key_;
+      static std::atomic<long> fake_key_;
 
     private:
-      int error_no_;
+      std::atomic<int> error_no_;
       int input_fd_;
       char* file_name_;
       FILE* input_file_;
