@@ -1,7 +1,7 @@
 package com.foursquare.caffe;
 
 import caffe.*;
-import com.google.protobuf.ByteString;
+import com.google.protobuf.*;
 import java.io.*;
 import java.lang.*;
 import java.util.*;
@@ -27,8 +27,8 @@ public class jMRFeatureExtraction {
   private int currentToNNBatchId = 0;
   private int currentToNNBatchIndex = -1;
   private String currentToNNBatchFileNamePrefix = "/dev/shm/foursquare_pcv1_in_";
-  private PrintWriter currentToNNBatchFileStream =
-    new PrintWriter(currentToNNBatchFileNamePrefix + currentToNNBatchId);
+  private FileOutputStream currentToNNBatchFileStream =
+    new FileOutputStream(currentToNNBatchFileNamePrefix + currentToNNBatchId);
 
   public void writeDatum(Caffe.Datum datum) throws Exception {
     if (currentToNNBatchIndex == batchSize - 1) {
@@ -38,13 +38,16 @@ public class jMRFeatureExtraction {
       currentToNNBatchIndex = -1;
       ++currentToNNBatchId;
 
-      currentToNNBatchFileStream = new PrintWriter(currentToNNBatchFileNamePrefix + currentToNNBatchId);
+      currentToNNBatchFileStream =
+        new FileOutputStream(currentToNNBatchFileNamePrefix + currentToNNBatchId);
     }
-    currentToNNBatchFileStream.println(datum.toByteString().toStringUtf8());
+
+    datum.writeDelimitedTo(currentToNNBatchFileStream);
     ++currentToNNBatchIndex;
   }
 
   private int currentFromNNBatchIndex = -1;
+  private String fileName = null;
   private BufferedReader currentFromNNBatchFileStream = null;
 
   public Caffe.Datum readDatum() throws Exception {
@@ -53,9 +56,13 @@ public class jMRFeatureExtraction {
         currentFromNNBatchFileStream.close();
       }
 
+      if (fileName != null) {
+        new File(fileName).delete();
+      }
+
       currentFromNNBatchIndex = -1;
 
-      String fileName = fromNNFile.readLine();
+      fileName = fromNNFile.readLine();
 
       currentFromNNBatchFileStream = new BufferedReader(new FileReader(fileName));
     }
