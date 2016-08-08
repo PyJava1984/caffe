@@ -48,6 +48,7 @@ public class jMRFeatureExtraction {
 
   private String fileName = null;
   private FileInputStream currentFromNNBatchFileStream = null;
+  private CodedInputStream cis = null;
 
   public Caffe.Datum readDatum() throws Exception {
     if (currentFromNNBatchFileStream == null) {
@@ -58,9 +59,13 @@ public class jMRFeatureExtraction {
       fileName = fromNNFile.readLine();
 
       currentFromNNBatchFileStream = new FileInputStream(fileName);
+      cis = CodedInputStream.newInstance(currentFromNNBatchFileStream);
     }
 
-    Caffe.Datum datum = Caffe.Datum.parseDelimitedFrom(currentFromNNBatchFileStream);
+    // TODO(zen): avoid copying
+    int size = cis.readRawVarint32();
+    byte[] rawBytes = cis.readRawBytes(size);
+    Caffe.Datum datum = Caffe.Datum.newBuilder().mergeFrom(rawBytes).build();
 
     if (datum == null) {
       currentFromNNBatchFileStream.close();

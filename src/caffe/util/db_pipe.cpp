@@ -136,9 +136,7 @@ namespace caffe {
         new google::protobuf::io::OstreamOutputStream(&output_stream);
 
       while(!batch_.empty()) {
-        const caffe::Datum& msg = batch_.front();
-
-        write_delimited_to(msg, raw_output_stream);
+        write_delimited_to(batch_.front(), raw_output_stream);
 
         batch_.pop();
         ++commit_count;
