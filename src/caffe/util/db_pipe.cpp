@@ -48,6 +48,8 @@ namespace caffe {
       uint32_t size;
       if (!input.ReadVarint32(&size)) return 1; // eof
 
+      LOG(ERROR) << "msg size " << size;
+
       // Tell the stream not to read beyond that size.
       google::protobuf::io::CodedInputStream::Limit limit =
           input.PushLimit(size);
@@ -91,9 +93,11 @@ namespace caffe {
         close(current_to_nn_batch_fd_);
       }
 
-      current_to_nn_batch_fd_ = open(file_name_, O_RDONLY);
+      file_name_[strlen(file_name_) - 1] = '\0';
 
-      LOG(ERROR) << "Opening to nn batch file " << file_name_;
+      LOG(ERROR) << "Opening to nn batch file [" << file_name_ << "]";
+
+      current_to_nn_batch_fd_ = open(file_name_, O_RDONLY);
 
       current_to_nn_batch_stream_ =
           new google::protobuf::io::FileInputStream(current_to_nn_batch_fd_);
@@ -104,7 +108,7 @@ namespace caffe {
     }
 
     void PipeCursor::Next() {
-      int error_no = context_.readDelimitedFrom(&current_);
+      int error_no = context_->readDelimitedFrom(&current_);
 
       if (error_no == 0) {
         LOG(ERROR) << "Channles " << current_.channels();

@@ -79,6 +79,7 @@ namespace caffe {
         error_no_ = read_delimited_from(current_to_nn_batch_stream_, message);
 
         if (error_no_ == 1) {
+          LOG(ERROR) << "Opening next to nn batch stream";
           open_to_nn_batch_stream();
         }
 
@@ -102,7 +103,7 @@ namespace caffe {
 
     class PipeCursor : public Cursor {
     public:
-      explicit PipeCursor(PipeReadContext& context): context_(context) {
+      explicit PipeCursor(PipeReadContext* context): context_(context) {
         Next();
       }
 
@@ -124,7 +125,7 @@ namespace caffe {
       static std::atomic<long> fake_key_;
 
     private:
-      PipeReadContext& context_;
+      PipeReadContext* context_;
       caffe::Datum current_;
     };
 
@@ -190,7 +191,7 @@ namespace caffe {
           read_context_ = new PipeReadContext(source_);
         }
 
-        return new PipeCursor(*read_context_);
+        return new PipeCursor(read_context_);
       }
 
       virtual PipeTransaction* NewTransaction() {
