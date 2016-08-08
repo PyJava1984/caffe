@@ -9,7 +9,7 @@ namespace db=caffe::db;
 
 namespace caffe {
   namespace db {
-    bool writeDelimitedTo(
+    bool write_delimited_to(
       const google::protobuf::MessageLite& message,
       google::protobuf::io::ZeroCopyOutputStream* rawOutput
     ) {
@@ -34,7 +34,7 @@ namespace caffe {
       return true;
     }
 
-    int readDelimitedFrom(
+    int read_delimited_from(
       google::protobuf::io::ZeroCopyInputStream* rawInput,
       google::protobuf::MessageLite* message
     ) {
@@ -65,7 +65,7 @@ namespace caffe {
     std::atomic<long> PipeCursor::fake_key_(0l);
 
     // Will delete the previous file
-    void PipeCursor::open_to_nn_batch_stream() {
+    void PipeReadContext::open_to_nn_batch_stream() {
       current_to_nn_batch_stream_lock_.lock();
 
       if (error_no_ == 0) {
@@ -104,19 +104,18 @@ namespace caffe {
     }
 
     void PipeCursor::Next() {
-      error_no_ = readDelimitedFrom(current_to_nn_batch_stream_, &current_);
+      int error_no = context_.readDelimitedFrom(&current_);
 
-      if (error_no_ == 0) {
+      if (error_no == 0) {
         LOG(ERROR) << "Channles " << current_.channels();
+      } else if (error_no == 1) {
+        throw std::runtime_error("Should never reach here");
       } else {
-        if (error_no_ == 1) { // Treat the underlying pipe as a stream
-          open_to_nn_batch_stream();
-          Next();
-        } else {
-          LOG(ERROR) << "Invalid read " << "@" << fake_key_;
-        }
+        LOG(ERROR) << "Invalid read " << "@" << fake_key_;
       }
     }
+
+    std::atomic<long> PipeTransaction::current_from_nn_batch_id_(0l);
 
     void PipeTransaction::Commit() {
       int commit_count = 0;
@@ -134,7 +133,7 @@ namespace caffe {
       while(!batch_.empty()) {
         const caffe::Datum& msg = batch_.front();
 
-        writeDelimitedTo(msg, output_stream);
+        write_delimited_to(msg, output_stream);
 
         batch_.pop();
         ++commit_count;

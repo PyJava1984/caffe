@@ -33,21 +33,21 @@ namespace db=caffe::db;
 
 namespace caffe {
   namespace db {
-    bool writeDelimitedTo(
+    bool write_delimited_to(
         const google::protobuf::MessageLite& message,
         google::protobuf::io::ZeroCopyOutputStream* rawOutput
     );
 
-    int readDelimitedFrom(
+    int read_delimited_from(
         google::protobuf::io::ZeroCopyInputStream* rawInput,
         google::protobuf::MessageLite* message
     );
 
-    class PipeCursor : public Cursor {
+    class PipeReadContext {
     public:
-      explicit PipeCursor(std::string& source): file_name_(NULL),
-                                                current_to_nn_batch_fd_(-1),
-                                                current_to_nn_batch_stream_(NULL) {
+      PipeReadContext(std::string& source): file_name_(NULL),
+                                        current_to_nn_batch_fd_(-1),
+                                        current_to_nn_batch_stream_(NULL) {
         error_no_ = 1;
 
         LOG(ERROR) << "Opening pipe " << source;
@@ -55,10 +55,9 @@ namespace caffe {
         input_file_ = fdopen(input_fd_, "rw");
 
         open_to_nn_batch_stream();
-
-        Next();
       }
-      ~PipeCursor() {
+
+      ~PipeReadContext() {
         fclose(input_file_);
         close(input_fd_);
 
@@ -73,6 +72,40 @@ namespace caffe {
 
         close(current_to_nn_batch_fd_);
       }
+
+      int readDelimitedFrom(
+          google::protobuf::MessageLite* message
+      ) {
+        error_no_ = read_delimited_from(current_to_nn_batch_stream_, message);
+
+        if (error_no_ == 1) {
+          open_to_nn_batch_stream();
+        }
+
+        return error_no_;
+      }
+
+    private:
+      // Will delete the previous file
+      void open_to_nn_batch_stream();
+
+    public:
+      int error_no_;
+      int input_fd_;
+      char* file_name_;
+      FILE* input_file_;
+
+      std::mutex current_to_nn_batch_stream_lock_;
+      int current_to_nn_batch_fd_;
+      google::protobuf::io::ZeroCopyInputStream *current_to_nn_batch_stream_;
+    };
+
+    class PipeCursor : public Cursor {
+    public:
+      explicit PipeCursor(PipeReadContext& context): context_(context) {
+        Next();
+      }
+
       virtual void SeekToFirst() { } // TODO(zen): use ZeroCopyInputStream::BackUp
       virtual void Next();
       virtual std::string key() {
@@ -85,31 +118,19 @@ namespace caffe {
         current_.SerializeToString(&out);
         return out;
       }
-      virtual bool valid() { return error_no_ >= 0; } // Next() will handle the recoverable errors like eof
-
-    private:
-      // Will delete the previous file
-      void open_to_nn_batch_stream();
+      virtual bool valid() { return true; }
 
     private:
       static std::atomic<long> fake_key_;
 
     private:
-      std::atomic<int> error_no_;
-      int input_fd_;
-      char* file_name_;
-      FILE* input_file_;
+      PipeReadContext& context_;
       caffe::Datum current_;
-      std::mutex current_to_nn_batch_stream_lock_;
-
-      int current_to_nn_batch_fd_;
-      google::protobuf::io::ZeroCopyInputStream *current_to_nn_batch_stream_;
     };
 
     class PipeTransaction : public Transaction {
     public:
-      explicit PipeTransaction(std::string& source): current_from_nn_batch_id_(0),
-                                                     current_from_nn_batch_fd_(-1) {
+      explicit PipeTransaction(std::string& source): current_from_nn_batch_fd_(-1) {
         out_fd_ = open(source.c_str(), O_RDWR);
       }
       virtual void Put(const std::string& key, const std::string& value) {
@@ -128,11 +149,14 @@ namespace caffe {
       }
 
     private:
+      // TODO(zen): use context to wrap the state
+      static std::atomic<long> current_from_nn_batch_id_;
+
+    private:
       int out_fd_;
       google::protobuf::io::ZeroCopyOutputStream* output_;
       std::queue<caffe::Datum> batch_;
 
-      int current_from_nn_batch_id_;
       int current_from_nn_batch_fd_;
 
     DISABLE_COPY_AND_ASSIGN(PipeTransaction);
@@ -140,7 +164,7 @@ namespace caffe {
 
     class Pipe : public DB {
     public:
-      Pipe() {
+      Pipe(): read_context_(NULL) {
         LOG(ERROR) << "Opening pipe db";
       }
       virtual ~Pipe() { Close(); }
@@ -148,7 +172,13 @@ namespace caffe {
         source_ = source;
         mode_ = mode;
       }
-      virtual void Close() { }
+      virtual void Close() {
+        if (read_context_ != NULL) {
+          delete read_context_;
+          read_context_ = NULL;
+        }
+      }
+
       virtual PipeCursor* NewCursor() {
         if (mode_ != db::READ) {
           std::ostringstream str_stream;
@@ -156,8 +186,13 @@ namespace caffe {
           throw std::runtime_error(str_stream.str());
         }
 
-        return new PipeCursor(source_);
+        if (read_context_ == NULL) {
+          read_context_ = new PipeReadContext(source_);
+        }
+
+        return new PipeCursor(*read_context_);
       }
+
       virtual PipeTransaction* NewTransaction() {
         if (mode_ != db::WRITE && mode_ != db::NEW) {
           std::ostringstream str_stream;
@@ -171,6 +206,7 @@ namespace caffe {
     private:
       std::string source_;
       db::Mode mode_;
+      PipeReadContext* read_context_;
     };
   }  // namespace db
 }  // namespace caffe
