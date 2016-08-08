@@ -7,7 +7,7 @@ import collection.JavaConverters._
 import com.foursquare.caffe.jMRFeatureExtraction
 import com.google.protobuf.ByteString
 import java.awt.image.{BufferedImage, DataBufferByte}
-import java.io.{File, FileInputStream, FileOutputStream}
+import java.io.{File, FileInputStream, FileOutputStream, PrintWriter}
 import java.lang.{Runnable, Thread}
 import javax.imageio.ImageIO
 import scala.io.Source
@@ -25,17 +25,18 @@ object jMRFeatureExtractionTestApp extends App {
   )
 
   val worker = new Thread(new Runnable() {
-    void run() {
+    def run(): Unit = {
       val featureDatum = featureExtraction.readDatum()
 
-      featureDarum.getFloatDataList.asScala.foreach(d => resultWriter.println(s"$d "))
+      featureDatum.getFloatDataList.asScala.foreach(d => resultWriter.print(s"$d "))
+      resultWriter.println
     }
   })
 
   worker.start()
 
   fileList.foreach(f => {
-    val img = ImageIO.read(new File(f))
+    val img = ImageIO.read(new File(f.split(' ')(0)))
     val byteArray = img.getRaster.getDataBuffer.asInstanceOf[DataBufferByte].getData
     val datum = Datum.newBuilder
       .setData(ByteString.copyFrom(byteArray))
@@ -56,7 +57,4 @@ object jMRFeatureExtractionTestApp extends App {
 
   resultWriter.close
   source.close
-
-  inputStream.close
-  outputStream.close
 }

@@ -122,6 +122,16 @@ namespace caffe {
       virtual bool valid() { return true; }
 
     private:
+      void clear_current() {
+        current_.clear_data();
+        current_.clear_float_data();
+        current_.clear_height();
+        current_.clear_label();
+        current_.clear_width();
+        current_.clear_channels();
+      }
+
+    private:
       static std::atomic<long> fake_key_;
 
     private:

@@ -20,6 +20,8 @@ namespace caffe {
       const int size = message.ByteSize();
       output.WriteVarint32(size);
 
+      LOG(ERROR) << "Message size " << size;
+
       uint8_t* buffer = output.GetDirectBufferForNBytesAndAdvance(size);
       if (buffer != NULL) {
         // Optimization:  The message fits in one buffer, so use the faster
@@ -105,6 +107,8 @@ namespace caffe {
     }
 
     void PipeCursor::Next() {
+      clear_current();
+
       int error_no = context_->readDelimitedFrom(&current_);
 
       if (error_no == 1) {
@@ -127,21 +131,21 @@ namespace caffe {
          << MRFeatureExtraction::get_from_nn_batch_file_name_prefix()
          << current_from_nn_batch_id_;
       std::string file_name = ss.str();
-      int output_fd = open(file_name.c_str(), O_RDWR | O_CREAT);
-      google::protobuf::io::ZeroCopyOutputStream* output_stream =
-        new google::protobuf::io::FileOutputStream(output_fd);
+      std::ofstream output_stream(file_name.c_str(), std::ios::binary);
+      google::protobuf::io::ZeroCopyOutputStream* raw_output_stream =
+        new google::protobuf::io::OstreamOutputStream(&output_stream);
 
       while(!batch_.empty()) {
         const caffe::Datum& msg = batch_.front();
 
-        write_delimited_to(msg, output_stream);
+        write_delimited_to(msg, raw_output_stream);
 
         batch_.pop();
         ++commit_count;
       }
 
-      close(output_fd);
-      delete output_stream;
+      output_stream.close();
+      delete raw_output_stream;
 
       stringstream buf_ss;
       buf_ss << file_name << "\n";
@@ -157,3 +161,4 @@ namespace caffe {
     }
   }
 }
+
