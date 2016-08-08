@@ -48,11 +48,8 @@ namespace caffe {
       uint32_t size;
       if (!input.ReadVarint32(&size)) return 1; // eof
 
-      LOG(ERROR) << "msg size " << size;
-
       // Tell the stream not to read beyond that size.
-      google::protobuf::io::CodedInputStream::Limit limit =
-          input.PushLimit(size);
+      google::protobuf::io::CodedInputStream::Limit limit = input.PushLimit(size);
 
       // Parse the message.
       if (!message->MergeFromCodedStream(&input)) return -1;
@@ -110,13 +107,13 @@ namespace caffe {
     void PipeCursor::Next() {
       int error_no = context_->readDelimitedFrom(&current_);
 
-      if (error_no == 0) {
-        LOG(ERROR) << "Channles " << current_.channels();
-      } else if (error_no == 1) {
-        throw std::runtime_error("Should never reach here");
-      } else {
+      if (error_no == 1) {
+        throw std::runtime_error("Unhandled streaming read");
+      } else if (error_no < 0) {
         LOG(ERROR) << "Invalid read " << "@" << fake_key_;
       }
+
+      ++fake_key_;
     }
 
     std::atomic<long> PipeTransaction::current_from_nn_batch_id_(0l);

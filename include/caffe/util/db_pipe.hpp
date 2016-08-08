@@ -197,7 +197,9 @@ namespace caffe {
       virtual PipeTransaction* NewTransaction() {
         if (mode_ != db::WRITE && mode_ != db::NEW) {
           std::ostringstream str_stream;
-          str_stream << "Can only create transaction on write only pipe";
+          str_stream << "Can only create transaction on write only pipe ["
+            << source_ << "] mode is ["
+            << mode_ << "]";
           throw std::runtime_error(str_stream.str());
         }
 

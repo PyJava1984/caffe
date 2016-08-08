@@ -83,7 +83,7 @@ int MRFeatureExtraction::feature_extraction_pipeline(
 
   LOG(INFO)<< "Opening pipe " << target_pipe_path;
   boost::shared_ptr<db::Pipe> feature_db(new db::Pipe());
-  feature_db->Open(target_pipe_path, db::READ);
+  feature_db->Open(target_pipe_path, db::WRITE);
 
   size_t num_features = blob_names.size();
 
