@@ -20,8 +20,6 @@ namespace caffe {
       const int size = message.ByteSize();
       output.WriteVarint32(size);
 
-      LOG(ERROR) << "Message size " << size;
-
       uint8_t* buffer = output.GetDirectBufferForNBytesAndAdvance(size);
       if (buffer != NULL) {
         // Optimization:  The message fits in one buffer, so use the faster
@@ -142,8 +140,8 @@ namespace caffe {
         ++commit_count;
       }
 
-      output_stream.close();
       delete raw_output_stream;
+      output_stream.close();
 
       stringstream buf_ss;
       buf_ss << file_name << "\n";
