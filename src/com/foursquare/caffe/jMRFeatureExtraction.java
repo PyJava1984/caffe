@@ -46,21 +46,14 @@ public class jMRFeatureExtraction {
     ++currentToNNBatchIndex;
   }
 
-  private int currentFromNNBatchIndex = -1;
   private String fileName = null;
   private FileInputStream currentFromNNBatchFileStream = null;
 
   public Caffe.Datum readDatum() throws Exception {
-    if (currentFromNNBatchFileStream == null || currentFromNNBatchIndex == batchSize - 1) {
-      if (currentFromNNBatchFileStream != null) {
-        currentFromNNBatchFileStream.close();
-      }
-
+    if (currentFromNNBatchFileStream == null) {
       if (fileName != null) {
         new File(fileName).delete();
       }
-
-      currentFromNNBatchIndex = -1;
 
       fileName = fromNNFile.readLine();
 
@@ -70,9 +63,10 @@ public class jMRFeatureExtraction {
     Caffe.Datum datum = Caffe.Datum.parseDelimitedFrom(currentFromNNBatchFileStream);
 
     if (datum == null) {
-      currentFromNNBatchIndex = batchSize - 1;
-    } else {
-      ++currentFromNNBatchIndex;
+      currentFromNNBatchFileStream.close();
+      currentFromNNBatchFileStream = null;
+
+      return readDatum();
     }
 
     return datum;
