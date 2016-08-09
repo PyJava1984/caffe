@@ -660,7 +660,10 @@ $(JAVA$(PROJECT)_SO): $(JAVA$(PROJECT)_SRC)
 	cp src/com/foursquare/caffe/jMRFeatureExtraction.java com/foursquare/caffe/
 	jar cf $(LIB_BUILD_DIR)/../$(JAVA$(PROJECT)_JAR) com/*
 	rm -r com
-	cp lib/protobuf-java-*.jar $(LIB_BUILD_DIR)
+	cp lib/protobuf-java-2.5.0.jar $(LIB_BUILD_DIR)
+        scalac -d . -cp $(LIB_BUILD_DIR)/caffe_protobuf.jar:$(LIB_BUILD_DIR)/caffe_jni.jar:lib/protobuf-java-2.5.0.jar test/com/foursquare/caffe/test/jMRFeatureExtractionTest.scala
+        jar cf $(LIB_BUILD_DIR)/caffe_test.jar com/*
+        rm -r com
 
 clean:
 	@- $(RM) -rf $(ALL_BUILD_DIRS)
