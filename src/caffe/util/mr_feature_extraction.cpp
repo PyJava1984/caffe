@@ -120,7 +120,6 @@ int MRFeatureExtraction::feature_extraction_pipeline(
           datum.add_float_data(feature_blob_data[d]);
         }
 
-        LOG(ERROR) << "origin message size" << datum.ByteSize();
         txns.at(i)->Put(datum);
         ++image_indices[i];
         if (image_indices[i] % mini_batch_size == 0) {

@@ -106,7 +106,7 @@ void DataReader::Body::read_one(db::Cursor* cursor, QueuePair* qp) {
   Datum* datum = qp->free_.pop();
   // TODO deserialize in-place instead of copy?
   datum->ParseFromString(cursor->value());
-  LOG(ERROR) << datum->channels();
+
   qp->full_.push(datum);
 
   // go to the next iter

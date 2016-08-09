@@ -82,7 +82,7 @@ public class jMRFeatureExtraction {
     featureExtractionThread.start();
   }
 
-  public int stop() {
+  public int stop() throws Exception {
     stopFeatureExtraction();
 
     try {
@@ -91,11 +91,16 @@ public class jMRFeatureExtraction {
       return -1;
     }
 
+    toNNFile.close();
+    fromNNFile.close();
+
     return featureExtractionReturnCode;
   }
 
   static {
-    File jar = new File(jMRFeatureExtraction.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-    System.load(jar.getParentFile().toURI().resolve("libcaffe_jni.so").getPath());
+    try {
+      System.load(new File("libcaffe.so").getCanonicalPath());
+      System.load(new File("libcaffe_jni.so").getCanonicalPath());
+    } catch (Exception e) { }
   }
 }

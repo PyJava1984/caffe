@@ -26,17 +26,32 @@ object jMRFeatureExtractionTestApp extends App {
 
   val worker = new Thread(new Runnable() {
     def run(): Unit = {
-      val featureDatum = featureExtraction.readDatum()
+      var count = 0
 
-      featureDatum.getFloatDataList.asScala.foreach(d => resultWriter.print(s"$d "))
-      resultWriter.println
+      while(true) {
+        try {
+          println(s"Start reading $count");
+
+          val featureDatum = featureExtraction.readDatum()
+
+          count += 1
+
+          featureDatum.getFloatDataList.asScala.foreach(d => resultWriter.print(s"$d "))
+          resultWriter.println
+        } catch {
+          case e: Exception => {
+            resultWriter.close
+          }
+        }
+      }
     }
   })
 
+  println("Start worker")
   worker.start()
 
   fileList.foreach(f => {
-    val img = ImageIO.read(new File(f.split(' ')(0)))
+    val img = ImageIO.read(new File(f))
     val byteArray = img.getRaster.getDataBuffer.asInstanceOf[DataBufferByte].getData
     val datum = Datum.newBuilder
       .setData(ByteString.copyFrom(byteArray))
@@ -48,13 +63,22 @@ object jMRFeatureExtractionTestApp extends App {
     featureExtraction.writeDatum(datum)
   })
 
+  Thread.sleep(1000)
+
   // TODO(zen): add flush method to force sync.
   val ret = featureExtraction.stop()
 
   println(ret)
 
-  worker.interrupt()
-
   resultWriter.close
+
+  try {
+    worker.stop()
+  } catch {
+    case e: Exception => {
+      println("Worker ended")
+    }
+  }
+  
   source.close
 }
