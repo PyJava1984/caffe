@@ -28,7 +28,7 @@ object jMRFeatureExtractionTestApp extends App {
     def run(): Unit = {
       var count = 0
 
-      while(true) {
+      while(!Thread.interrupted) {
         try {
           println(s"Start reading $count");
 
@@ -39,7 +39,12 @@ object jMRFeatureExtractionTestApp extends App {
           featureDatum.getFloatDataList.asScala.foreach(d => resultWriter.print(s"$d "))
           resultWriter.println
         } catch {
+          case e: InterruptedException => {
+            println("Worker interrupted")
+            resultWriter.close
+          }
           case e: Exception => {
+            println(s"Failed with exception [${e.getMessage}]")
             resultWriter.close
           }
         }
@@ -63,6 +68,8 @@ object jMRFeatureExtractionTestApp extends App {
     featureExtraction.writeDatum(datum)
   })
 
+  source.close
+
   Thread.sleep(1000)
 
   // TODO(zen): add flush method to force sync.
@@ -72,13 +79,11 @@ object jMRFeatureExtractionTestApp extends App {
 
   resultWriter.close
 
-  try {
-    worker.stop()
-  } catch {
-    case e: Exception => {
-      println("Worker ended")
-    }
-  }
-  
-  source.close
+  println("Result writer closed")
+
+  worker.interrupt()
+
+  println("Worker interrupted")
+
+  System.exit(0)
 }

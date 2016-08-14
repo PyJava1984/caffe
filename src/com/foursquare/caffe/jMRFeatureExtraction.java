@@ -75,7 +75,11 @@ public class jMRFeatureExtraction {
   public void start(String pretrainedBinaryProto, String featureExtractionProto) {
     featureExtractionThread = new Thread(new Runnable() {
       public void run() {
-        featureExtractionReturnCode = startFeatureExtraction(pretrainedBinaryProto, featureExtractionProto);
+        try {
+          featureExtractionReturnCode = startFeatureExtraction(pretrainedBinaryProto, featureExtractionProto);
+        } catch(Exception e) {
+          featureExtractionReturnCode = 1;
+        }
       }
     });
 
@@ -84,15 +88,18 @@ public class jMRFeatureExtraction {
 
   public int stop() throws Exception {
     stopFeatureExtraction();
+    Thread.sleep(1000);
 
     try {
       featureExtractionThread.join(5000);
     } catch(Exception e) {
       return -1;
-    }
+    } finally { 
+      System.err.println("Closing pipes");
 
-    toNNFile.close();
-    fromNNFile.close();
+      toNNFile.close();
+      fromNNFile.close();
+    }
 
     return featureExtractionReturnCode;
   }
