@@ -150,7 +150,7 @@ namespace caffe {
       buf_ss << file_name << "\n";
       std::string buf = buf_ss.str();
 
-      write(out_fd_, buf.c_str(), buf.length() + 1);
+      write(out_fd_, buf.c_str(), buf.length()); // Do not write the tailing '\0' to pipe.
 
       if (commit_count > MRFeatureExtraction::get_batch_size()) {
         throw std::runtime_error("Batch size larger than batch size.");

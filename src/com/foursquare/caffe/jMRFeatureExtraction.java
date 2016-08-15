@@ -56,7 +56,7 @@ public class jMRFeatureExtraction {
       }
 
       fileName = fromNNFile.readLine();
-
+      
       currentFromNNBatchFileStream = new FileInputStream(fileName);
     }
 

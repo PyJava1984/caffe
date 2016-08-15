@@ -30,7 +30,7 @@ object jMRFeatureExtractionTestApp extends App {
 
       while(!Thread.interrupted) {
         try {
-          println(s"Start reading $count");
+          println(s"Start reading $count")
 
           val featureDatum = featureExtraction.readDatum()
 
@@ -70,7 +70,7 @@ object jMRFeatureExtractionTestApp extends App {
 
   source.close
 
-  Thread.sleep(1000)
+  Thread.sleep(5000)
 
   // TODO(zen): add flush method to force sync.
   val ret = featureExtraction.stop()
