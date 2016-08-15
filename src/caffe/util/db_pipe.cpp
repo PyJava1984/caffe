@@ -169,6 +169,9 @@ namespace caffe {
       opened_source_queue_.pop();
       opened_source_queue_lock_.unlock();
     }
+
+    std::mutex Pipe::opened_source_queue_lock_;
+    std::queue<std::string> Pipe::opened_source_queue_;
   }
 }
 

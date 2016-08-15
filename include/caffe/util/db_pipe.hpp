@@ -239,8 +239,8 @@ namespace caffe {
       PipeReadContext* read_context_;
 
       // As input batch and output batch have the same size, it is safe to delete one input when commit is done.
-      std::mutex opened_source_queue_lock_;
-      std::queue<std::string> opened_source_queue_;
+      static std::mutex opened_source_queue_lock_;
+      static std::queue<std::string> opened_source_queue_;
     };
   }  // namespace db
 }  // namespace caffe
