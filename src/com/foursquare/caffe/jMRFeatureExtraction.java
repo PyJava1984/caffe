@@ -39,7 +39,7 @@ public class jMRFeatureExtraction {
       ++currentToNNBatchId;
 
       // Throttling, never pile up more than 30 batches in share memory
-      while (currentToNNBatchIndex - currentFromNNBatchIndex > 30) {
+      while (currentToNNBatchId - currentFromNNBatchId > 30) {
         Thread.sleep(100);
       }
 
@@ -53,7 +53,7 @@ public class jMRFeatureExtraction {
 
   private String fileName = null;
   private FileInputStream currentFromNNBatchFileStream = null;
-  private int currentFromNNBatchIndex = -1;
+  private int currentFromNNBatchId = -1;
 
   public Caffe.Datum readDatum() throws Exception {
     if (currentFromNNBatchFileStream == null) {
@@ -66,7 +66,7 @@ public class jMRFeatureExtraction {
       currentFromNNBatchFileStream = new FileInputStream(fileName);
 
       String[] parts = fileName.split("_");
-      currentFromNNBatchIndex = Integer.parseInt(parts[parts.length - 1]);
+      currentFromNNBatchId = Integer.parseInt(parts[parts.length - 1]);
     }
 
     Caffe.Datum datum = Caffe.Datum.parseDelimitedFrom(currentFromNNBatchFileStream);
