@@ -51,16 +51,19 @@ namespace caffe {
         error_no_ = 1;
 
         LOG(ERROR) << "Opening pipe " << source;
-        input_file_stream_.open(source.c_str());
+        input_fd_ = open(source.c_str(), O_RDWR);
+        input_file_ = fdopen(input_fd_, "rw");
 
         open_to_nn_batch_stream();
       }
 
       ~PipeReadContext() {
-        input_file_stream_.close();
+        fclose(input_file_);
+        close(input_fd_);
 
-        if (!file_name_.empty()) {
-          std::remove(file_name_.c_str());
+        if (file_name_ != NULL) {
+          std::remove(file_name_);
+          free(file_name_);
         }
 
         if (current_to_nn_batch_stream_ != NULL) {
@@ -90,8 +93,8 @@ namespace caffe {
     public:
       int error_no_;
       int input_fd_;
-      std::string file_name_;
-      std::fstream input_file_stream_;
+      char* file_name_;
+      FILE* input_file_;
 
       std::mutex current_to_nn_batch_stream_lock_;
       int current_to_nn_batch_fd_;

@@ -75,22 +75,26 @@ namespace caffe {
         delete current_to_nn_batch_stream_;
       }
 
-      if (!file_name_.empty()) {
-        std::remove(file_name_.c_str());
+      if (file_name_ != NULL) {
+        std::remove(file_name_);
+        free(file_name_);
       }
 
+      size_t nbytes = 255;
+      file_name_ = (char *)malloc(nbytes + 1);
+
       LOG(ERROR) << "Trying to get file name";
-      std::getline(input_file_stream_, file_name_);
+      ::getline(&file_name_, &nbytes, input_file_);
 
       if (current_to_nn_batch_fd_ != -1) {
         close(current_to_nn_batch_fd_);
       }
 
-      file_name_.erase(file_name_.length() - 1, 1);
+      file_name_[strlen(file_name_) - 1] = '\0';
 
       LOG(ERROR) << "Opening to nn batch file [" << file_name_ << "]";
 
-      current_to_nn_batch_fd_ = open(file_name_.c_str(), O_RDONLY);
+      current_to_nn_batch_fd_ = open(file_name_, O_RDONLY);
 
       current_to_nn_batch_stream_ =
           new google::protobuf::io::FileInputStream(current_to_nn_batch_fd_);
