@@ -65,7 +65,7 @@ public class jMRFeatureExtraction {
       
       currentFromNNBatchFileStream = new FileInputStream(fileName);
 
-      String[] parts = string.split("_");
+      String[] parts = fileName.split("_");
       currentFromNNBatchIndex = Integer.parseInt(parts[parts.length - 1]);
     }
 
