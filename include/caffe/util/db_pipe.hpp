@@ -86,6 +86,8 @@ namespace caffe {
         if (error_no_ == 1) {
           LOG(ERROR) << "Opening next to nn batch stream";
           open_to_nn_batch_stream();
+
+          error_no_ = read_delimited_from(current_to_nn_batch_stream_, message);
         }
 
         return error_no_;
