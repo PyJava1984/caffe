@@ -45,9 +45,15 @@ namespace caffe {
 
     class PipeReadContext {
     public:
-      PipeReadContext(std::string& source): file_name_(NULL),
-                                        current_to_nn_batch_fd_(-1),
-                                        current_to_nn_batch_stream_(NULL) {
+      PipeReadContext(std::string& source,
+                      std::mutex& opened_source_queue_lock,
+                      std::queue<std::string>& opened_source_queue
+      ): file_name_(NULL),
+         current_to_nn_batch_fd_(-1),
+         current_to_nn_batch_stream_(NULL),
+         opened_source_queue_lock_(opened_source_queue_lock),
+         opened_source_queue_(opened_source_queue)
+      {
         error_no_ = 1;
 
         LOG(ERROR) << "Opening pipe " << source;
@@ -62,7 +68,6 @@ namespace caffe {
         close(input_fd_);
 
         if (file_name_ != NULL) {
-          std::remove(file_name_);
           free(file_name_);
         }
 
@@ -99,6 +104,9 @@ namespace caffe {
       std::mutex current_to_nn_batch_stream_lock_;
       int current_to_nn_batch_fd_;
       google::protobuf::io::ZeroCopyInputStream *current_to_nn_batch_stream_;
+
+      std::mutex& opened_source_queue_lock_;
+      std::queue<std::string>& opened_source_queue_;
     };
 
     class PipeCursor : public Cursor {
@@ -141,7 +149,13 @@ namespace caffe {
 
     class PipeTransaction : public Transaction {
     public:
-      explicit PipeTransaction(std::string& source): current_from_nn_batch_fd_(-1) {
+      explicit PipeTransaction(std::string& source,
+                               std::mutex& opened_source_queue_lock,
+                               std::queue<std::string>& opened_source_queue
+      ): current_from_nn_batch_fd_(-1),
+         opened_source_queue_lock_(opened_source_queue_lock),
+         opened_source_queue_(opened_source_queue)
+      {
         out_fd_ = open(source.c_str(), O_RDWR);
       }
       virtual void Put(const std::string& key, const std::string& value) {
@@ -169,6 +183,9 @@ namespace caffe {
       std::queue<caffe::Datum> batch_;
 
       int current_from_nn_batch_fd_;
+
+      std::mutex& opened_source_queue_lock_;
+      std::queue<std::string>& opened_source_queue_;
 
     DISABLE_COPY_AND_ASSIGN(PipeTransaction);
     };
@@ -198,7 +215,7 @@ namespace caffe {
         }
 
         if (read_context_ == NULL) {
-          read_context_ = new PipeReadContext(source_);
+          read_context_ = new PipeReadContext(source_, opened_source_queue_lock_, opened_source_queue_);
         }
 
         return new PipeCursor(read_context_);
@@ -213,13 +230,17 @@ namespace caffe {
           throw std::runtime_error(str_stream.str());
         }
 
-        return new PipeTransaction(source_);
+        return new PipeTransaction(source_, opened_source_queue_lock_, opened_source_queue_);
       }
 
     private:
       std::string source_;
       db::Mode mode_;
       PipeReadContext* read_context_;
+
+      // As input batch and output batch have the same size, it is safe to delete one input when commit is done.
+      std::mutex opened_source_queue_lock_;
+      std::queue<std::string> opened_source_queue_;
     };
   }  // namespace db
 }  // namespace caffe

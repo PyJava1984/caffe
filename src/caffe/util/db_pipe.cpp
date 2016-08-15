@@ -76,7 +76,6 @@ namespace caffe {
       }
 
       if (file_name_ != NULL) {
-        std::remove(file_name_);
         free(file_name_);
       }
 
@@ -102,6 +101,10 @@ namespace caffe {
       error_no_ = 0;
 
       current_to_nn_batch_stream_lock_.unlock();
+
+      opened_source_queue_lock_.lock();
+      opened_source_queue_.push(std::string(file_name_));
+      opened_source_queue_lock_.unlock();
     }
 
     void PipeCursor::Next() {
@@ -154,6 +157,17 @@ namespace caffe {
       }
 
       ++current_from_nn_batch_id_;
+
+      opened_source_queue_lock_.lock();
+      if (opened_source_queue_.empty()) {
+        opened_source_queue_lock_.unlock();
+
+        throw std::runtime_error("Input batch count and output batch count do not match.");
+      }
+
+      std::remove(opened_source_queue_.front().c_str());
+      opened_source_queue_.pop();
+      opened_source_queue_lock_.unlock();
     }
   }
 }
