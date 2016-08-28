@@ -1,7 +1,7 @@
 name: "GoogleNet"
 layer {
   name: "data"
-  type: "Data"
+  type: "ImageFolderData"
   top: "data"
   top: "label"
   include {
@@ -14,10 +14,11 @@ layer {
     mean_value: 117
     mean_value: 123
   }
-  data_param {
-    source: "examples/imagenet/ilsvrc12_train_lmdb"
+  image_data_param {
+    source: "/home/zen/imagenet/ILSVRC2012_img_train_t3"
     batch_size: 32
-    backend: LMDB
+    new_height: 256
+    new_width: 256
   }
 }
 layer {
