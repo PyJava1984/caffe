@@ -29,14 +29,21 @@ namespace caffe {
 
     virtual ~ImageFolderDataLayer();
 
-    virtual void DataLayerSetUp(const vector<Blob<Dtype> *> &bottom,
-                                const vector<Blob<Dtype> *> &top);
-
     virtual inline const char *type() const { return "ImageFolderData"; }
 
     virtual inline int ExactNumBottomBlobs() const { return 0; }
 
     virtual inline int ExactNumTopBlobs() const { return 2; }
+
+  protected:
+    virtual void load_images();
+    virtual void transform_image(
+        Batch<Dtype>* batch,
+        Dtype* prefetch_data,
+        int item_id,
+        const cv::Mat& cv_img,
+        Blob<Dtype>* transformed_blob
+    );
 
   private:
     void get_image_files(const std::string &path);

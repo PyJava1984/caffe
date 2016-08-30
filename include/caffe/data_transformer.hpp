@@ -75,6 +75,21 @@ class DataTransformer {
    *    set_cpu_data() is used. See image_data_layer.cpp for an example.
    */
   void Transform(const cv::Mat& cv_img, Blob<Dtype>* transformed_blob);
+
+  void MultiTransforms(const cv::Mat& cv_img, Blob<Dtype>* transformed_blob);
+
+  void TransformImpl(
+      const cv::Mat& cv_img,
+      Blob<Dtype>* transformed_blob,
+      int crop_size,
+      bool do_mirror,
+      bool random_crop,
+      int new_height,
+      int new_width
+  );
+
+  int GetTotalNumber();
+
 #endif  // USE_OPENCV
 
   /**

@@ -36,7 +36,18 @@ class ImageDataLayer : public BasePrefetchingDataLayer<Dtype> {
   shared_ptr<Caffe::RNG> prefetch_rng_;
   virtual void ShuffleImages();
   virtual void load_batch(Batch<Dtype>* batch);
+  virtual void load_images();
+  virtual void transform_image(
+      Batch<Dtype>* batch,
+      Dtype* prefetch_data,
+      int item_id,
+      const cv::Mat& cv_img,
+      Blob<Dtype>* transformed_blob
+  );
 
+  std::string root_folder_;
+  int new_height_;
+  int new_width_;
   vector<std::pair<std::string, int> > lines_;
   int lines_id_;
 };

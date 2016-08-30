@@ -25,28 +25,16 @@ ImageDataLayer<Dtype>::~ImageDataLayer<Dtype>() {
 template <typename Dtype>
 void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
-  const int new_height = this->layer_param_.image_data_param().new_height();
-  const int new_width  = this->layer_param_.image_data_param().new_width();
+  new_height_ = this->layer_param_.image_data_param().new_height();
+  new_width_  = this->layer_param_.image_data_param().new_width();
   const bool is_color  = this->layer_param_.image_data_param().is_color();
-  string root_folder = this->layer_param_.image_data_param().root_folder();
+  root_folder_ = this->layer_param_.image_data_param().root_folder();
 
-  CHECK((new_height == 0 && new_width == 0) ||
-      (new_height > 0 && new_width > 0)) << "Current implementation requires "
+  CHECK((new_height_ == 0 && new_width_ == 0) ||
+        (new_height_ > 0 && new_width_ > 0)) << "Current implementation requires "
       "new_height and new_width to be set at the same time.";
-  // Read the file with filenames and labels
-  const string& source = this->layer_param_.image_data_param().source();
-  LOG(INFO) << "Opening file " << source;
-  std::ifstream infile(source.c_str());
-  string line;
-  size_t pos;
-  int label;
-  while (std::getline(infile, line)) {
-    pos = line.find_last_of(' ');
-    label = atoi(line.substr(pos + 1).c_str());
-    lines_.push_back(std::make_pair(line.substr(0, pos), label));
-  }
 
-  CHECK(!lines_.empty()) << "File is empty";
+  load_images();
 
   if (this->layer_param_.image_data_param().shuffle()) {
     // randomly shuffle data
@@ -67,8 +55,8 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
     lines_id_ = skip;
   }
   // Read an image, and use it to initialize the top blob.
-  cv::Mat cv_img = ReadImageToCVMat(root_folder + lines_[lines_id_].first,
-                                    new_height, new_width, is_color);
+  cv::Mat cv_img = ReadImageToCVMat(root_folder_ + lines_[lines_id_].first,
+                                    new_height_, new_width_, is_color);
   CHECK(cv_img.data) << "Could not load " << lines_[lines_id_].first;
   // Use data_transformer to infer the expected blob shape from a cv_image.
   vector<int> top_shape = this->data_transformer_->InferBlobShape(cv_img);
@@ -98,6 +86,39 @@ void ImageDataLayer<Dtype>::ShuffleImages() {
   caffe::rng_t* prefetch_rng =
       static_cast<caffe::rng_t*>(prefetch_rng_->generator());
   shuffle(lines_.begin(), lines_.end(), prefetch_rng);
+}
+
+template<typename Dtype>
+void ImageDataLayer<Dtype>::load_images() {
+
+  // Read the file with filenames and labels
+  const string& source = this->layer_param_.image_data_param().source();
+  LOG(INFO) << "Opening file " << source;
+  std::ifstream infile(source.c_str());
+  string line;
+  size_t pos;
+  int label;
+  while (std::getline(infile, line)) {
+    pos = line.find_last_of(' ');
+    label = atoi(line.substr(pos + 1).c_str());
+    lines_.push_back(std::make_pair(line.substr(0, pos), label));
+  }
+
+  CHECK(!lines_.empty()) << "File is empty";
+}
+
+template <typename Dtype>
+void ImageDataLayer<Dtype>::transform_image(
+    Batch<Dtype>* batch,
+    Dtype* prefetch_data,
+    int item_id,
+    const cv::Mat& cv_img,
+    Blob<Dtype>* transformed_blob
+) {
+  // Apply transformations (mirror, crop...) to the image
+  int offset = batch->data_.offset(item_id);
+  this->transformed_data_.set_cpu_data(prefetch_data + offset);
+  this->data_transformer_->Transform(cv_img, &(this->transformed_data_));
 }
 
 // This function is called on prefetch thread
@@ -143,10 +164,7 @@ void ImageDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     CHECK(cv_img.data) << "Could not load " << lines_[lines_id_].first;
     read_time += timer.MicroSeconds();
     timer.Start();
-    // Apply transformations (mirror, crop...) to the image
-    int offset = batch->data_.offset(item_id);
-    this->transformed_data_.set_cpu_data(prefetch_data + offset);
-    this->data_transformer_->Transform(cv_img, &(this->transformed_data_));
+    transform_image(batch, prefetch_data, item_id, cv_img, &(this->transformed_data_));
     trans_time += timer.MicroSeconds();
 
     prefetch_label[item_id] = lines_[lines_id_].second;
