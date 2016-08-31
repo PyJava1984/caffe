@@ -46,7 +46,7 @@ namespace caffe {
               throw std::runtime_error("Duplicated label name " + last_folder_name);
             }
 
-            if (image_folder_label_map_.find(last_folder_name) != image_folder_label_map_.end()) {
+            if (image_folder_label_map_.find(last_folder_name) == image_folder_label_map_.end()) {
               image_folder_label_map_.insert(
                 std::make_pair(last_folder_name, current_label_++)
               );
@@ -100,6 +100,8 @@ namespace caffe {
 
       current_label_ = std::max(label, current_label_);
     }
+
+    current_label_++;
   }
 
   template<typename Dtype>
@@ -148,7 +150,7 @@ namespace caffe {
   void ImageFolderDataLayer<Dtype>::load_images() {
     const string &known_label_path = this->layer_param_.image_data_param().known_label_path();
     if (!known_label_path.empty()) {
-      fs::path absolute_known_label_path = fs::canonical(this->root_folder_, known_label_path);
+      fs::path absolute_known_label_path = fs::canonical(known_label_path, this->root_folder_);
 
       LOG(INFO) << "Load known labels from [" << absolute_known_label_path << ']';
       load_known_labels(absolute_known_label_path.string());
@@ -156,7 +158,7 @@ namespace caffe {
 
     const string &debug_known_label_path = this->layer_param_.image_data_param().debug_known_label_path();
     if (!debug_known_label_path.empty()) {
-      fs::path absolute_debug_known_label_path = fs::canonical(this->root_folder_, debug_known_label_path);
+      fs::path absolute_debug_known_label_path = fs::complete(debug_known_label_path, this->root_folder_);
 
       LOG(INFO) << "Save debug known labels to [" << absolute_debug_known_label_path << ']';
       save_debug_known_labels(absolute_debug_known_label_path.string());
@@ -166,7 +168,7 @@ namespace caffe {
     std::map<string, int> image_label_map;
 
     if (!image_label_path.empty()) {
-      fs::path absolute_image_label_path = fs::canonical(this->root_folder_, image_label_path);
+      fs::path absolute_image_label_path = fs::canonical(image_label_path, this->root_folder_);
 
       LOG(INFO) << "Load image labels from [" << absolute_image_label_path << ']';
       load_image_labels(absolute_image_label_path.string(), image_label_map);
@@ -175,7 +177,7 @@ namespace caffe {
     const string &source = this->layer_param_.image_data_param().source();
     LOG(INFO) << "Opening folder " << source;
 
-    fs::path absolute_path = fs::canonical(this->root_folder_, source);
+    fs::path absolute_path = fs::canonical(source, this->root_folder_);
     get_image_files(absolute_path.string(), image_label_map);
 
     CHECK(!this->lines_.empty()) << "File is empty";
@@ -183,7 +185,7 @@ namespace caffe {
     const string &debug_image_label_path = this->layer_param_.image_data_param().debug_image_label_path();
 
     if (!debug_image_label_path.empty()) {
-      fs::path absolute_debug_image_label_path = fs::canonical(this->root_folder_, debug_image_label_path);
+      fs::path absolute_debug_image_label_path = fs::complete(debug_image_label_path, this->root_folder_);
 
       LOG(INFO) << "Save debug image labels to [" << absolute_debug_image_label_path << ']';
       save_debug_image_labels(absolute_debug_image_label_path.string());
