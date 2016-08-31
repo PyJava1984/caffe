@@ -148,22 +148,28 @@ namespace caffe {
   void ImageFolderDataLayer<Dtype>::load_images() {
     const string &known_label_path = this->layer_param_.image_data_param().known_label_path();
     if (!known_label_path.empty()) {
-      LOG(INFO) << "Load known labels from [" << known_label_path << ']';
-      load_known_labels(known_label_path);
+      fs::path absolute_known_label_path = fs::canonical(this->root_folder_, known_label_path);
+
+      LOG(INFO) << "Load known labels from [" << absolute_known_label_path << ']';
+      load_known_labels(absolute_known_label_path.string());
     }
 
     const string &debug_known_label_path = this->layer_param_.image_data_param().debug_known_label_path();
     if (!debug_known_label_path.empty()) {
-      LOG(INFO) << "Save debug known labels to [" << debug_known_label_path << ']';
-      save_debug_known_labels(debug_known_label_path);
+      fs::path absolute_debug_known_label_path = fs::canonical(this->root_folder_, debug_known_label_path);
+
+      LOG(INFO) << "Save debug known labels to [" << absolute_debug_known_label_path << ']';
+      save_debug_known_labels(absolute_debug_known_label_path.string());
     }
 
     const string &image_label_path = this->layer_param_.image_data_param().image_label_path();
     std::map<string, int> image_label_map;
 
     if (!image_label_path.empty()) {
-      LOG(INFO) << "Load image labels from [" << image_label_path << ']';
-      load_image_labels(image_label_path, image_label_map);
+      fs::path absolute_image_label_path = fs::canonical(this->root_folder_, image_label_path);
+
+      LOG(INFO) << "Load image labels from [" << absolute_image_label_path << ']';
+      load_image_labels(absolute_image_label_path.string(), image_label_map);
     }
 
     const string &source = this->layer_param_.image_data_param().source();
@@ -177,8 +183,10 @@ namespace caffe {
     const string &debug_image_label_path = this->layer_param_.image_data_param().debug_image_label_path();
 
     if (!debug_image_label_path.empty()) {
-      LOG(INFO) << "Save debug image labels to [" << debug_image_label_path << ']';
-      save_debug_image_labels(debug_image_label_path);
+      fs::path absolute_debug_image_label_path = fs::canonical(this->root_folder_, debug_image_label_path);
+
+      LOG(INFO) << "Save debug image labels to [" << absolute_debug_image_label_path << ']';
+      save_debug_image_labels(absolute_debug_image_label_path.string());
     }
   }
 

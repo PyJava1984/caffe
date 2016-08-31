@@ -1,7 +1,7 @@
 name: "GoogleNet"
 layer {
   name: "data"
-  type: "Data"
+  type: "ImageFolderData"
   top: "data"
   top: "label"
   include {
@@ -14,15 +14,19 @@ layer {
     mean_value: 117
     mean_value: 123
   }
-  data_param {
-    source: "examples/imagenet/ilsvrc12_train_lmdb"
+  image_data_param {
+    root: "~"
+    source: "imagenet/ILSVRC2012_img_train_t3"
     batch_size: 32
-    backend: LMDB
+    shuffle: true
+    known_label_path: "src/caffe/models/4sq_googlenet/4sq_label.txt"
+    debug_known_label_path: "src/caffe/models/4sq_googlenet/debug_4sq_label.txt"
+    debug_image_label_path: "src/caffe/models/4sq_googlenet/debug_train_label.txt"
   }
 }
 layer {
   name: "data"
-  type: "Data"
+  type: "ImageFolderData"
   top: "data"
   top: "label"
   include {
@@ -35,10 +39,12 @@ layer {
     mean_value: 117
     mean_value: 123
   }
-  data_param {
-    source: "examples/imagenet/ilsvrc12_val_lmdb"
-    batch_size: 50
-    backend: LMDB
+  image_data_param {
+    root: "~"
+    source: "imagenet/ILSVRC2012_img_val"
+    batch_size: 32
+    image_label_path: "src/caffe/models/4sq_googlenet/val.txt"
+    debug_image_label_path: "src/caffe/models/4sq_googlenet/debug_val_label.txt"
   }
 }
 layer {
