@@ -46,7 +46,11 @@ namespace caffe {
     );
 
   private:
-    void get_image_files(const std::string &path);
+    void get_image_files(const std::string &path, std::map<string, int> image_label_map);
+    void load_known_labels(const std::string &path);
+    void save_debug_known_labels(const std::string &path);
+    void load_image_labels(const std::string &path, std::map<std::string, int>& m);
+    void save_debug_image_labels(const std::string &path);
 
     inline bool is_label(const std::string& str) {
       if (str.empty() || str[0] != 'n') {

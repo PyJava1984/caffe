@@ -804,6 +804,10 @@ message ImageDataParameter {
   // data.
   optional bool mirror = 6 [default = false];
   optional string root_folder = 12 [default = ""];
+  optional string known_label_path = 13 [default = ""];
+  optional string debug_known_label_path = 14 [default = ""];
+  optional string image_label_path = 15 [default = ""];
+  optional string debug_image_label_path = 16 [default = ""];
 }
 
 message InfogainLossParameter {
