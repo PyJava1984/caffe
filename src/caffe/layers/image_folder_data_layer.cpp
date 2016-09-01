@@ -22,6 +22,14 @@ namespace caffe {
     this->StopInternalThread();
   }
 
+  template <typename Dtype>
+  int ImageFolderDataLayer<Dtype>::get_batch_size() {
+    // Reshape prefetch_data and top[0] according to the batch_size.
+    const int batch_size = this->layer_param_.image_data_param().batch_size();
+    CHECK_GT(batch_size, 0) << "Positive batch size required";
+    return batch_size * this->data_transformer_->GetTotalNumber();
+  }
+
   template<typename Dtype>
   void ImageFolderDataLayer<Dtype>::get_image_files(const std::string &path, std::map<string, int> image_label_map) {
     current_label_ = 0;

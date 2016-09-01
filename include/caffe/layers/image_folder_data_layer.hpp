@@ -38,12 +38,13 @@ namespace caffe {
   protected:
     virtual void load_images();
     virtual void transform_image(
-        Batch<Dtype>* batch,
-        Dtype* prefetch_data,
-        int item_id,
-        const cv::Mat& cv_img,
-        Blob<Dtype>* transformed_blob
+      Batch<Dtype>* batch,
+      Dtype* prefetch_data,
+      int item_id,
+      const cv::Mat& cv_img,
+      Blob<Dtype>* transformed_blob
     );
+    virtual int get_batch_size();
 
   private:
     void get_image_files(const std::string &path, std::map<string, int> image_label_map);

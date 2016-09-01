@@ -226,7 +226,8 @@ void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
 
 template<typename Dtype>
 int DataTransformer<Dtype>::GetTotalNumber() {
-  int mirror_count = param_.mirror() ? 2 : 1;
+  // int mirror_count = param_.mirror() ? 2 : 1;
+  int mirror_count = 1;
   int scale_count = param_.scale_count();
   int crop_count = param_.crop_count();
 
@@ -256,10 +257,16 @@ void DataTransformer<Dtype>::MultiTransforms(const cv::Mat& cv_img,
     int new_width = param_.new_width();
 
     std::vector<bool> mirrors;
-    mirrors.push_back(false);
+    /*mirrors.push_back(false);
 
     if (mirror) {
       mirrors.push_back(true);
+    }*/
+
+    if (mirror) {
+      mirrors.push_back(Rand(2));
+    } else {
+      mirrors.push_back(false);
     }
 
     std::vector<std::pair<int, int>> scale_sizes;

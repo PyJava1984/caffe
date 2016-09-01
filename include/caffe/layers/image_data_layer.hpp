@@ -38,12 +38,13 @@ class ImageDataLayer : public BasePrefetchingDataLayer<Dtype> {
   virtual void load_batch(Batch<Dtype>* batch);
   virtual void load_images();
   virtual void transform_image(
-      Batch<Dtype>* batch,
-      Dtype* prefetch_data,
-      int item_id,
-      const cv::Mat& cv_img,
-      Blob<Dtype>* transformed_blob
+    Batch<Dtype>* batch,
+    Dtype* prefetch_data,
+    int item_id,
+    const cv::Mat& cv_img,
+    Blob<Dtype>* transformed_blob
   );
+  virtual int get_batch_size();
 
   std::string root_folder_;
   int new_height_;
