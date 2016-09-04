@@ -46,10 +46,6 @@ namespace caffe {
           );
 
           if (is_label(last_folder_name)) {
-            if (image_folder_label_map_.find(last_folder_name) != image_folder_label_map_.end()) {
-              throw std::runtime_error("Duplicated label name " + last_folder_name);
-            }
-
             if (image_label_map.find(last_folder_name) == image_label_map.end()) {
               LOG(ERROR) << "Add missing label [" << last_folder_name << ']';
 
