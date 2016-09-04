@@ -245,7 +245,7 @@ void DataTransformer<Dtype>::MultiTransforms(const cv::Mat& cv_img,
   } else {
     bool mirror = param_.mirror();
     int crop_size = param_.crop_size();
-    int crop_count = param_.crop_count();
+    // int crop_count = param_.crop_count();
     int scale_count = param_.scale_count();
     int new_height = param_.new_height();
     int new_width = param_.new_width();
