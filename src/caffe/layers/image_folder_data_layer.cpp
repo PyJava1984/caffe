@@ -49,12 +49,13 @@ namespace caffe {
           );
 
           if (is_label(last_folder_name)) {
-            if (image_folder_label_map_.find(last_folder_name) !=
-                image_folder_label_map_.end()) {
+            if (image_folder_label_map_.find(last_folder_name) != image_folder_label_map_.end()) {
               throw std::runtime_error("Duplicated label name " + last_folder_name);
             }
 
-            if (image_folder_label_map_.find(last_folder_name) == image_folder_label_map_.end()) {
+            if (image_label_map.find(last_folder_name) == image_label_map.end()) {
+              LOG(ERROR) << "Add missing label [" << last_folder_name << ']';
+
               image_folder_label_map_.insert(
                 std::make_pair(last_folder_name, current_label_++)
               );
@@ -69,17 +70,13 @@ namespace caffe {
           );
 
           if (is_label(last_folder_name)) {
-            int label = image_folder_label_map_[last_folder_name];
-
             if (image_label_map.find(file_name.string()) != image_label_map.end()) {
-              int new_label = image_label_map[file_name.string()];
+              int label = image_label_map[file_name.string()];
 
-              if (label != new_label) {
-                LOG(ERROR) << "Labels do not match [" << label << "] and [" << new_label << ']';
-              }
-
-              this->lines_.push_back(std::make_pair(cp.string(), new_label));
+              this->lines_.push_back(std::make_pair(cp.string(), label));
             } else {
+              int label = image_folder_label_map_[last_folder_name];
+
               this->lines_.push_back(std::make_pair(cp.string(), label));
             }
           }

@@ -226,12 +226,7 @@ void DataTransformer<Dtype>::Transform(const vector<cv::Mat> & mat_vector,
 
 template<typename Dtype>
 int DataTransformer<Dtype>::GetTotalNumber() {
-  // int mirror_count = param_.mirror() ? 2 : 1;
-  int mirror_count = 1;
-  int scale_count = param_.scale_count();
-  int crop_count = param_.crop_count();
-
-  return mirror_count * scale_count * crop_count;
+  return 1;
 }
 
 template<typename Dtype>
@@ -248,7 +243,6 @@ void DataTransformer<Dtype>::MultiTransforms(const cv::Mat& cv_img,
 
     Transform(cv_img, &uni_blob);
   } else {
-    int idx = 0;
     bool mirror = param_.mirror();
     int crop_size = param_.crop_size();
     int crop_count = param_.crop_count();
@@ -257,12 +251,6 @@ void DataTransformer<Dtype>::MultiTransforms(const cv::Mat& cv_img,
     int new_width = param_.new_width();
 
     std::vector<bool> mirrors;
-    /*mirrors.push_back(false);
-
-    if (mirror) {
-      mirrors.push_back(true);
-    }*/
-
     if (mirror) {
       mirrors.push_back(Rand(2));
     } else {
@@ -277,17 +265,11 @@ void DataTransformer<Dtype>::MultiTransforms(const cv::Mat& cv_img,
       scale_sizes.push_back(std::make_pair(new_width, new_height));
 
       if (scale_count > 1) {
-        int height_step = (cv_img.rows - new_height) / (scale_count - 1);
         int width_step = (cv_img.cols - new_width) / (scale_count - 1);
+        int height_step = (cv_img.rows - new_height) / (scale_count - 1);
 
-        scale_sizes.push_back(std::make_pair(cv_img.cols, cv_img.rows));
-
-        for(int i = 0; i < scale_count - 2; ++i) {
-          new_height += height_step;
-          new_width += width_step;
-
-          scale_sizes.push_back(std::make_pair(new_width, new_height));
-        }
+        scale_sizes.push_back(std::make_pair(cv_img.cols + width_step * Rand(scale_count),
+                                             cv_img.rows + new_height * Rand(scale_count)));
       }
     }
 
@@ -304,26 +286,10 @@ void DataTransformer<Dtype>::MultiTransforms(const cv::Mat& cv_img,
           &uni_blob,
           crop_size,
           do_mirror,
-          false,
+          true,
           scale_sizes[j].second,
           scale_sizes[j].first
         );
-
-        for (int k = 0; k < crop_count - 1; ++k) {
-          Blob<Dtype> uni_blob_1(1, channels, height, width);
-          int offset = transformed_blob->offset(idx++);
-          uni_blob_1.set_cpu_data(transformed_blob->mutable_cpu_data() + offset);
-
-          TransformImpl(
-            cv_img,
-            &uni_blob_1,
-            crop_size,
-            do_mirror,
-            true,
-            scale_sizes[j].second,
-            scale_sizes[j].first
-          );
-        }
       }
     }
   }
