@@ -32,9 +32,6 @@ namespace caffe {
 
   template<typename Dtype>
   void ImageFolderDataLayer<Dtype>::get_image_files(const std::string &path, std::map<string, int> image_label_map) {
-    current_label_ = 0;
-    image_folder_label_map_.clear();
-
     if (!path.empty()) {
       fs::path apk_path(path);
       fs::recursive_directory_iterator end;
