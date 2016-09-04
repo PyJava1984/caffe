@@ -269,10 +269,11 @@ void DataTransformer<Dtype>::MultiTransforms(const cv::Mat& cv_img,
         int height_step = (cv_img.rows - new_height) / (scale_count - 1);
 
         scale_sizes.push_back(std::make_pair(cv_img.cols + width_step * Rand(scale_count),
-                                             cv_img.rows + new_height * Rand(scale_count)));
+                                             cv_img.rows + height_step * Rand(scale_count)));
       }
     }
 
+    int idx = 0;
     for (int i = 0; i < mirrors.size(); ++i) {
       bool do_mirror = mirrors[i];
 
