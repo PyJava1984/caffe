@@ -162,19 +162,26 @@ void ImageDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 
   // datum scales
   const int lines_size = lines_.size();
-  for (int item_id = 0; item_id < batch_size; ++item_id) {
+  int skip_count = 0;
+  for (int item_id = 0; item_id < batch_size + skip_count; ++item_id) {
     // get a blob
     timer.Start();
     CHECK_GT(lines_size, lines_id_);
     cv::Mat cv_img = ReadImageToCVMat(root_folder + lines_[lines_id_].first,
         new_height, new_width, is_color);
-    CHECK(cv_img.data) << "Could not load " << lines_[lines_id_].first;
+    if (cv_img.data == NULL) {
+      LOG(ERROR) << "Could not load " << lines_[lines_id_].first;
+      skip_count++;
+      goto GO_TO_NEXT_ITER;
+    }
     read_time += timer.MicroSeconds();
     timer.Start();
-    transform_image(batch, prefetch_data, item_id, cv_img, &(this->transformed_data_));
+    transform_image(batch, prefetch_data, item_id - skip_count, cv_img, &(this->transformed_data_));
     trans_time += timer.MicroSeconds();
 
-    prefetch_label[item_id] = lines_[lines_id_].second;
+    prefetch_label[item_id - skip_count] = lines_[lines_id_].second;
+
+GO_TO_NEXT_ITER:
     // go to the next iter
     lines_id_++;
     if (lines_id_ >= lines_size) {
