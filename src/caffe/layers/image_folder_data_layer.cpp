@@ -155,14 +155,6 @@ namespace caffe {
       load_known_labels(absolute_known_label_path.string());
     }
 
-    const string &debug_known_label_path = this->layer_param_.image_data_param().debug_known_label_path();
-    if (!debug_known_label_path.empty()) {
-      fs::path absolute_debug_known_label_path = fs::complete(debug_known_label_path, this->root_folder_);
-
-      LOG(INFO) << "Save debug known labels to [" << absolute_debug_known_label_path << ']';
-      save_debug_known_labels(absolute_debug_known_label_path.string());
-    }
-
     const string &image_label_path = this->layer_param_.image_data_param().image_label_path();
     std::map<string, int> image_label_map;
 
@@ -180,6 +172,14 @@ namespace caffe {
     get_image_files(absolute_path.string(), image_label_map);
 
     CHECK(!this->lines_.empty()) << "File is empty";
+
+    const string &debug_known_label_path = this->layer_param_.image_data_param().debug_known_label_path();
+    if (!debug_known_label_path.empty()) {
+      fs::path absolute_debug_known_label_path = fs::complete(debug_known_label_path, this->root_folder_);
+
+      LOG(INFO) << "Save debug known labels to [" << absolute_debug_known_label_path << ']';
+      save_debug_known_labels(absolute_debug_known_label_path.string());
+    }
 
     const string &debug_image_label_path = this->layer_param_.image_data_param().debug_image_label_path();
 
