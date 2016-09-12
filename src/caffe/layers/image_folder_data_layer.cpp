@@ -46,7 +46,7 @@ namespace caffe {
           );
 
           if (is_label(last_folder_name)) {
-            if (image_label_map.find(last_folder_name) == image_folder_label_map_.end()) {
+            if (image_label_map.find(last_folder_name) == image_label_map.end()) {
               LOG(ERROR) << "Add missing label [" << last_folder_name << ']';
 
               image_folder_label_map_.insert(
@@ -63,14 +63,12 @@ namespace caffe {
           );
 
           if (is_label(last_folder_name)) {
-            if (image_label_map.find(file_name.string()) != image_label_map.end()) {
-              int label = image_label_map[file_name.string()];
-
-              this->lines_.push_back(std::make_pair(cp.string(), label));
-            } else {
+            if (image_folder_label_map_.find(last_folder_name) != image_folder_label_map_.end()) {
               int label = image_folder_label_map_[last_folder_name];
 
               this->lines_.push_back(std::make_pair(cp.string(), label));
+            } else {
+              LOG(FATAL) << "Unknown label " << last_folder_name << " for file " << cp;
             }
           }
         }
@@ -95,6 +93,8 @@ namespace caffe {
       image_folder_label_map_.insert(
         std::make_pair(key, label)
       );
+
+      LOG(ERROR) << "Add known label name [" << key << "] as label [" << label << "]";
 
       current_label_ = std::max(label, current_label_);
     }
@@ -128,6 +128,7 @@ namespace caffe {
 
       int label = std::atoi(value.c_str());
 
+      LOG(ERROR) << "Add known label name [" << key << "] as label [" << label << "]";
       m.insert(std::make_pair(key, label));
     }
   }
