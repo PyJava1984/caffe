@@ -47,10 +47,9 @@ namespace caffe {
     virtual int get_batch_size();
 
   private:
-    void get_image_files(const std::string &path, std::map<string, int> image_label_map);
+    void get_image_files(const std::string &path);
     void load_known_labels(const std::string &path);
     void save_debug_known_labels(const std::string &path);
-    void load_image_labels(const std::string &path, std::map<std::string, int>& m);
     void save_debug_image_labels(const std::string &path);
 
     inline bool is_label(const std::string& str) {

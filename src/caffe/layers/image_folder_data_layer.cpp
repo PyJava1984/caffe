@@ -31,7 +31,7 @@ namespace caffe {
   }
 
   template<typename Dtype>
-  void ImageFolderDataLayer<Dtype>::get_image_files(const std::string &path, std::map<string, int> image_label_map) {
+  void ImageFolderDataLayer<Dtype>::get_image_files(const std::string &path) {
     if (!path.empty()) {
       fs::path apk_path(path);
       fs::recursive_directory_iterator end;
@@ -46,7 +46,7 @@ namespace caffe {
           );
 
           if (is_label(last_folder_name)) {
-            if (image_label_map.find(last_folder_name) == image_label_map.end()) {
+            if (image_folder_label_map_.find(last_folder_name) == image_folder_label_map_.end()) {
               LOG(ERROR) << "Add missing label [" << last_folder_name << ']';
 
               image_folder_label_map_.insert(
@@ -115,25 +115,6 @@ namespace caffe {
   }
 
   template<typename Dtype>
-  void ImageFolderDataLayer<Dtype>::load_image_labels(const std::string &path, std::map<std::string, int>& m) {
-    std::ifstream label_stream(path);
-
-    for(std::string line; std::getline(label_stream, line, '\n'); ) {
-      std::istringstream line_stream(line);
-      std::string key;
-      std::string value;
-
-      std::getline(line_stream, key, ' ');
-      std::getline(line_stream, value, ' ');
-
-      int label = std::atoi(value.c_str());
-
-      LOG(ERROR) << "Add known label name [" << key << "] as label [" << label << "]";
-      m.insert(std::make_pair(key, label));
-    }
-  }
-
-  template<typename Dtype>
   void ImageFolderDataLayer<Dtype>::save_debug_image_labels(const std::string &path) {
     std::ofstream os(path);
 
@@ -155,21 +136,11 @@ namespace caffe {
       load_known_labels(absolute_known_label_path.string());
     }
 
-    const string &image_label_path = this->layer_param_.image_data_param().image_label_path();
-    std::map<string, int> image_label_map;
-
-    if (!image_label_path.empty()) {
-      fs::path absolute_image_label_path = fs::canonical(image_label_path, this->root_folder_);
-
-      LOG(INFO) << "Load image labels from [" << absolute_image_label_path << ']';
-      load_image_labels(absolute_image_label_path.string(), image_label_map);
-    }
-
     const string &source = this->layer_param_.image_data_param().source();
     LOG(INFO) << "Opening folder " << source;
 
     fs::path absolute_path = fs::canonical(source, this->root_folder_);
-    get_image_files(absolute_path.string(), image_label_map);
+    get_image_files(absolute_path.string());
 
     CHECK(!this->lines_.empty()) << "File is empty";
 
