@@ -46,6 +46,19 @@ class ImageDataLayer : public BasePrefetchingDataLayer<Dtype> {
   );
   virtual int get_batch_size();
 
+  void goto_next_line() {
+    // go to the next iter
+    lines_id_++;
+    if (lines_id_ >= lines_.size()) {
+      // We have reached the end. Restart from the first.
+      DLOG(INFO) << "Restarting data prefetching from start.";
+      lines_id_ = 0;
+      if (this->layer_param_.image_data_param().shuffle()) {
+        ShuffleImages();
+      }
+    }
+  }
+
   std::string root_folder_;
   int new_height_;
   int new_width_;

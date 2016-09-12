@@ -148,8 +148,15 @@ void ImageDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
   // Reshape according to the first image of each batch
   // on single input batches allows for inputs of varying dimension.
   cv::Mat cv_img = ReadImageToCVMat(root_folder + lines_[lines_id_].first,
+    new_height, new_width, is_color);
+
+  while (cv_img.data == NULL) {
+    LOG(ERROR) << "Could not load " << lines_[lines_id_].first;
+    goto_next_line();
+    cv_img = ReadImageToCVMat(root_folder + lines_[lines_id_].first,
       new_height, new_width, is_color);
-  CHECK(cv_img.data) << "Could not load " << lines_[lines_id_].first;
+  }
+
   // Use data_transformer to infer the expected blob shape from a cv_img.
   vector<int> top_shape = this->data_transformer_->InferBlobShape(cv_img);
   this->transformed_data_.Reshape(top_shape);
@@ -168,12 +175,15 @@ void ImageDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     timer.Start();
     CHECK_GT(lines_size, lines_id_);
     cv::Mat cv_img = ReadImageToCVMat(root_folder + lines_[lines_id_].first,
-        new_height, new_width, is_color);
+      new_height, new_width, is_color);
+
     if (cv_img.data == NULL) {
       LOG(ERROR) << "Could not load " << lines_[lines_id_].first;
       skip_count++;
-      goto GO_TO_NEXT_ITER;
+      goto_next_line();
+      continue;
     }
+
     read_time += timer.MicroSeconds();
     timer.Start();
     transform_image(batch, prefetch_data, item_id - skip_count, cv_img, &(this->transformed_data_));
@@ -181,17 +191,7 @@ void ImageDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 
     prefetch_label[item_id - skip_count] = lines_[lines_id_].second;
 
-GO_TO_NEXT_ITER:
-    // go to the next iter
-    lines_id_++;
-    if (lines_id_ >= lines_size) {
-      // We have reached the end. Restart from the first.
-      DLOG(INFO) << "Restarting data prefetching from start.";
-      lines_id_ = 0;
-      if (this->layer_param_.image_data_param().shuffle()) {
-        ShuffleImages();
-      }
-    }
+    goto_next_line();
   }
   batch_timer.Stop();
   DLOG(INFO) << "Prefetch batch: " << batch_timer.MilliSeconds() << " ms.";
