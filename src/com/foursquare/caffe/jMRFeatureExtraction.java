@@ -115,8 +115,8 @@ public class jMRFeatureExtraction {
 
   static {
     try {
-      System.load(new File("libcaffe.so").getCanonicalPath());
-      System.load(new File("libcaffe_jni.so").getCanonicalPath());
+      System.loadLibrary("caffe");
+      System.loadLibrary("caffe_jni");
     } catch (Exception e) { }
   }
 }
