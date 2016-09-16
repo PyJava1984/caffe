@@ -2,7 +2,7 @@
 #include "mr_feature_extraction.hpp"
 #include "com_foursquare_caffe_jMRFeatureExtraction.h"
 
-MRFeatureExtraction instance; // Singleton
+MRFeatureExtraction<float> instance; // Singleton
 
 JNIEXPORT jint JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_startFeatureExtraction(
   JNIEnv *env,
@@ -13,12 +13,12 @@ JNIEXPORT jint JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_startFeatu
   const char* c_pretrained_binary_proto = env->GetStringUTFChars(pretrained_binary_proto, NULL);
   const char* c_feature_extraction_proto = env->GetStringUTFChars(feature_extraction_proto, NULL);
 
-  int ret = instance.run_feature_extraction_pipeline(c_pretrained_binary_proto, c_feature_extraction_proto);
+  instance.start_feature_extraction_pipeline(c_pretrained_binary_proto, c_feature_extraction_proto);
 
   env->ReleaseStringUTFChars(pretrained_binary_proto, c_pretrained_binary_proto);
   env->ReleaseStringUTFChars(feature_extraction_proto, c_feature_extraction_proto);
 
-  return reinterpret_cast<jint>(ret);
+  return reinterpret_cast<jint>(0);
 }
 
 JNIEXPORT void JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_stopFeatureExtraction(JNIEnv *env, jobject obj)

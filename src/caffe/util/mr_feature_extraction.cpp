@@ -9,6 +9,7 @@
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/text_format.h>
 #include <caffe/util/db_pipe.hpp>
+#include <caffe/layers/memory_data_layer.hpp>
 
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
@@ -26,11 +27,14 @@ using caffe::Net;
 using std::string;
 namespace db = caffe::db;
 
-int MRFeatureExtraction::run_feature_extraction_pipeline(
+template<typename Dtype>
+int MRFeatureExtraction<Dtype>::run_feature_extraction_pipeline(
   const char* pretrained_binary_proto,
   const char* feature_extraction_proto
 ) {
   stop_signal_ = false;
+
+  ::google::InitGoogleLogging("feature_extraction_pipeline");
 
   return feature_extraction_pipeline<float>(
     pretrained_binary_proto,
@@ -44,7 +48,39 @@ int MRFeatureExtraction::run_feature_extraction_pipeline(
 }
 
 template<typename Dtype>
-int MRFeatureExtraction::feature_extraction_pipeline(
+void MRFeatureExtraction<Dtype>::start_feature_extraction_pipeline(
+  std::string pretrained_binary_proto,
+  std::string feature_extraction_proto
+) {
+  ::google::InitGoogleLogging("feature_extraction_pipeline");
+
+  stop_signal_ = false;
+
+  LOG(ERROR)<< "Using GPU";
+
+  LOG(ERROR) << "Using Device_id=" << 0;
+  Caffe::SetDevice(0);
+  Caffe::set_mode(Caffe::GPU);
+
+  feature_extraction_net_ = new Net<Dtype>(feature_extraction_proto, caffe::TEST);
+  feature_extraction_net_->CopyTrainedLayersFrom(pretrained_binary_proto);
+}
+
+template<typename Dtype>
+const boost::shared_ptr<Blob<Dtype> > MRFeatureExtraction<Dtype>::process_batch(
+  std::vector<caffe::Datum> &batch
+) {
+  boost::shared_ptr<caffe::MemoryDataLayer<float>> inmem_layer =
+    boost::dynamic_pointer_cast<caffe::MemoryDataLayer<float>>(feature_extraction_net_->layers()[0]);
+
+  inmem_layer->AddDatumVector(batch);
+  feature_extraction_net_->Forward();
+
+  return feature_extraction_net_->blob_by_name("pool5/7x7_s1");
+}
+
+template<typename Dtype>
+int MRFeatureExtraction<Dtype>::feature_extraction_pipeline(
   std::string pretrained_binary_proto,
   std::string feature_extraction_proto,
   std::string extract_feature_blob_names,
@@ -53,8 +89,6 @@ int MRFeatureExtraction::feature_extraction_pipeline(
   Caffe::Brew caffe_mode,
   int device_id
 ) {
-  ::google::InitGoogleLogging("feature_extraction_pipeline");
-
   if (caffe_mode == Caffe::GPU) {
     LOG(ERROR)<< "Using GPU";
 

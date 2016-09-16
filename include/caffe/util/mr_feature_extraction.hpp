@@ -7,12 +7,13 @@
 
 #include <string>
 #include "caffe/common.hpp"
+#include "caffe/net.hpp"
 
+template<typename Dtype>
 class MRFeatureExtraction {
 public:
-  MRFeatureExtraction(): stop_signal_(false) { }
+  MRFeatureExtraction(): stop_signal_(false), feature_extraction_net_(NULL) { }
 
-  template<typename Dtype>
   int feature_extraction_pipeline(
     std::string pretrained_binary_proto,
     std::string feature_extraction_proto,
@@ -23,6 +24,11 @@ public:
     int device_id
   );
 
+  void start_feature_extraction_pipeline(
+      std::string pretrained_binary_proto,
+      std::string feature_extraction_proto
+  );
+
   int run_feature_extraction_pipeline(
     const char* pretrained_binary_proto,
     const char* feature_extraction_proto
@@ -30,7 +36,16 @@ public:
 
   void stop_feature_extraction_pipeline() {
     stop_signal_ = true;
+
+    if (feature_extraction_net_ != NULL) {
+      delete feature_extraction_net_;
+      feature_extraction_net_ = NULL;
+    }
   }
+
+  const boost::shared_ptr<caffe::Blob<Dtype> > process_batch(
+    std::vector<caffe::Datum> &batch
+  );
 
   const char* get_input_pipe_path() {
     return "/tmp/foursquare_pcv1_input_pipe";
@@ -58,6 +73,7 @@ public:
 
 private:
   volatile bool stop_signal_;
+  caffe::Net<Dtype> *feature_extraction_net_;
 };
 
 #endif //CAFFE_MR_FEATURE_EXTRACTION_HPP

@@ -9,6 +9,8 @@ import java.util.*;
 public class jMRFeatureExtraction {
   private native int startFeatureExtraction(String pretrainedBinaryProto, String featureExtractionProto);
 
+  private native byte[][] processBatch(byte[][] batchBytes);
+
   private native void stopFeatureExtraction();
 
   private Thread featureExtractionThread = null;

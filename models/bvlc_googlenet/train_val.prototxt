@@ -22,9 +22,12 @@ layer {
 }
 layer {
   name: "data"
-  type: "Data"
+  type: MEMORY_DATA
   top: "data"
   top: "label"
+  memory_data_param {
+    batch_size: 50
+  }
   include {
     phase: TEST
   }
@@ -34,11 +37,6 @@ layer {
     mean_value: 104
     mean_value: 117
     mean_value: 123
-  }
-  data_param {
-    source: "examples/imagenet/ilsvrc12_val_lmdb"
-    batch_size: 32
-    backend: LMDB
   }
 }
 layer {
