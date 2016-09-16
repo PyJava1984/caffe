@@ -7,6 +7,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#undef com_foursquare_caffe_jMRFeatureExtraction_batchSize
+#define com_foursquare_caffe_jMRFeatureExtraction_batchSize 50L
 /*
  * Class:     com_foursquare_caffe_jMRFeatureExtraction
  * Method:    startFeatureExtraction
@@ -17,8 +19,16 @@ JNIEXPORT jint JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_startFeatu
 
 /*
  * Class:     com_foursquare_caffe_jMRFeatureExtraction
+ * Method:    processBatch
+ * Signature: ([[B)[[B
+ */
+JNIEXPORT jobjectArray JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_processBatch
+  (JNIEnv *, jobject, jobjectArray);
+
+/*
+ * Class:     com_foursquare_caffe_jMRFeatureExtraction
  * Method:    stopFeatureExtraction
- * Signature: ()I
+ * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_stopFeatureExtraction
   (JNIEnv *, jobject);
