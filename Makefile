@@ -661,7 +661,6 @@ $(JAVA$(PROJECT)_SO): $(JAVA$(PROJECT)_SRC)
 	rm -r caffe
 	javac -d . -cp $(LIB_BUILD_DIR)/caffe_protobuf.jar:lib/protobuf-java-2.5.0.jar src/com/foursquare/caffe/jMRFeatureExtraction.java
 	cp src/com/foursquare/caffe/jMRFeatureExtraction.java com/foursquare/caffe/
-	cp libcaffe*.* com
 	jar cf $(LIB_BUILD_DIR)/../$(JAVA$(PROJECT)_JAR) com/*
 	rm -r com
 	cp lib/protobuf-java-2.5.0.jar $(LIB_BUILD_DIR)
