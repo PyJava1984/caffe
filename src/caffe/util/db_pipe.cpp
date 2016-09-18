@@ -127,9 +127,9 @@ namespace caffe {
       int commit_count = 0;
       stringstream ss;
 
-      ss << MRFeatureExtraction::get_share_memory_fs_path()
+      ss << MRFeatureExtraction<float>::get_share_memory_fs_path()
          << '/'
-         << MRFeatureExtraction::get_from_nn_batch_file_name_prefix()
+         << MRFeatureExtraction<float>::get_from_nn_batch_file_name_prefix()
          << current_from_nn_batch_id_;
       std::string file_name = ss.str();
       std::ofstream output_stream(file_name.c_str(), std::ios::binary);
@@ -152,7 +152,7 @@ namespace caffe {
 
       write(out_fd_, buf.c_str(), buf.length()); // Do not write the tailing '\0' to pipe.
 
-      if (commit_count > MRFeatureExtraction::get_batch_size()) {
+      if (commit_count > MRFeatureExtraction<float>::get_batch_size()) {
         throw std::runtime_error("Batch size larger than batch size.");
       }
 

@@ -36,7 +36,7 @@ int MRFeatureExtraction<Dtype>::run_feature_extraction_pipeline(
 
   ::google::InitGoogleLogging("feature_extraction_pipeline");
 
-  return feature_extraction_pipeline<float>(
+  return feature_extraction_pipeline(
     pretrained_binary_proto,
     feature_extraction_proto,
     "pool5/7x7_s1",

@@ -3,10 +3,24 @@
 
 #include <string>
 
+#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/io/zero_copy_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
+
 #include "caffe/common.hpp"
 #include "caffe/proto/caffe.pb.h"
 
 namespace caffe { namespace db {
+
+bool write_delimited_to(
+  const google::protobuf::MessageLite& message,
+  google::protobuf::io::ZeroCopyOutputStream* rawOutput
+);
+
+int read_delimited_from(
+  google::protobuf::io::ZeroCopyInputStream* rawInput,
+  google::protobuf::MessageLite* message
+);
 
 enum Mode { READ, WRITE, NEW };
 

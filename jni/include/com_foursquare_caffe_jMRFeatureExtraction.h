@@ -20,10 +20,10 @@ JNIEXPORT jint JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_startFeatu
 /*
  * Class:     com_foursquare_caffe_jMRFeatureExtraction
  * Method:    processBatch
- * Signature: ([[B)[[B
+ * Signature: (Ljava/lang/String;)Ljava/lang/String;
  */
-JNIEXPORT jobjectArray JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_processBatch
-  (JNIEnv *, jobject, jobjectArray);
+JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_processBatch
+  (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     com_foursquare_caffe_jMRFeatureExtraction
@@ -31,7 +31,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_pr
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_stopFeatureExtraction
-  (JNIEnv *, jobject);
+(JNIEnv *, jobject);
 
 /*
  * Class:     com_foursquare_caffe_jMRFeatureExtraction

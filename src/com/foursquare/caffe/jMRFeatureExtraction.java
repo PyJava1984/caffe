@@ -9,7 +9,7 @@ import java.util.*;
 public class jMRFeatureExtraction {
   private native int startFeatureExtraction(String pretrainedBinaryProto, String featureExtractionProto);
 
-  private native byte[][] processBatch(byte[][] batchBytes);
+  private native String processBatch(String batchFilePath);
 
   private native void stopFeatureExtraction();
 
@@ -22,6 +22,37 @@ public class jMRFeatureExtraction {
   public final static int batchSize = 50;
 
   public jMRFeatureExtraction() throws Exception { }
+
+  public List<Caffe.Datum> processBatch(List<Caffe.Datum> batch) throws Exception {
+    String batchFileName = currentToNNBatchFileNamePrefix + UUID.randomUUID();
+    FileOutputStream batchStream = new FileOutputStream(batchFileName);
+
+    for (int i = 0; i < batch.size(); ++i) {
+      Caffe.Datum datum = batch.get(i);
+      datum.writeDelimitedTo(batchStream);
+    }
+
+    batchStream.close();
+
+    String resultFileName = processBatch(batchFileName);
+    FileInputStream resultFileStream = new FileInputStream(resultFileName);
+    List results = new List();
+    Caffe.Datum datum = Caffe.Datum.parseDelimitedFrom(resultFileStream);
+
+    while (datum != null) {
+      results.add(datum);
+
+      datum = Caffe.Datum.parseDelimitedFrom(resultFileStream);
+    }
+
+    resultFileStream.close();
+
+    if (results.size() != batch.size()) {
+      throw new Exception("Input size and output size do not match.");
+    }
+
+    return results;
+  }
 
   public RandomAccessFile toNNFile = new RandomAccessFile(getInputPipePath(), "rw");
   public RandomAccessFile fromNNFile = new RandomAccessFile(getOutputPipePath(), "rw");

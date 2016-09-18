@@ -33,16 +33,6 @@ namespace db=caffe::db;
 
 namespace caffe {
   namespace db {
-    bool write_delimited_to(
-        const google::protobuf::MessageLite& message,
-        google::protobuf::io::ZeroCopyOutputStream* rawOutput
-    );
-
-    int read_delimited_from(
-        google::protobuf::io::ZeroCopyInputStream* rawInput,
-        google::protobuf::MessageLite* message
-    );
-
     class PipeReadContext {
     public:
       PipeReadContext(std::string& source,
