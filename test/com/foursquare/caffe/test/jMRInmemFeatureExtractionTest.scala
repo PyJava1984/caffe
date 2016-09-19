@@ -24,18 +24,25 @@ object jMRInmemFeatureExtractionTestApp extends App {
     args.lift(3).getOrElse("train_val.prototxt")
   )
 
-  val batch = fileList.map(f => {
-    val img = ImageIO.read(new File(f))
-    val byteArray = img.getRaster.getDataBuffer.asInstanceOf[DataBufferByte].getData
-    Datum.newBuilder
-      .setData(ByteString.copyFrom(byteArray))
-      .setHeight(img.getHeight)
-      .setWidth(img.getWidth)
-      .setChannels(3)
-      .build()
+  val batch = fileList.flatMap(f => {
+    try {
+      val img = ImageIO.read(new File(f))
+      val byteArray = img.getRaster.getDataBuffer.asInstanceOf[DataBufferByte].getData
+      Some(Datum.newBuilder
+        .setData(ByteString.copyFrom(byteArray))
+        .setHeight(img.getHeight)
+        .setWidth(img.getWidth)
+        .setChannels(3)
+        .build())
+    } catch {
+      case e: Exception => {
+        print(s"Failed to open $f")
+        None
+      }
+    }
   }).asJava
 
-  val results = featureExtraction.processBatch(batch);
+  val results = featureExtraction.processBatch(batch)
 
   results.asScala.foreach(featureDatum => {
     featureDatum.getFloatDataList.asScala.foreach(d => resultWriter.print(s"$d "))

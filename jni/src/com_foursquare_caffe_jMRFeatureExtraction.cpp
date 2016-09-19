@@ -48,10 +48,6 @@ JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_process
   const boost::shared_ptr<caffe::Blob<float> > feature_blob = instance.process_batch(batch);
   int batch_size = feature_blob->num();
 
-  if (batch_size != batch.size()) {
-    throw std::runtime_error("Input batch size and output batch size not matching.");
-  }
-
   std::stringstream ss;
   boost::uuids::basic_random_generator<boost::mt19937> gen;
   boost::uuids::uuid u = gen();
