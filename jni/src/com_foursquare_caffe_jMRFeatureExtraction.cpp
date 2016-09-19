@@ -12,7 +12,7 @@
 #include "mr_feature_extraction.hpp"
 #include "com_foursquare_caffe_jMRFeatureExtraction.h"
 
-MRFeatureExtraction<float> instance; // Singleton
+MRFeatureExtraction instance; // Singleton
 
 JNIEXPORT jint JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_startFeatureExtraction(
   JNIEnv *env,
@@ -57,9 +57,9 @@ JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_process
   boost::uuids::uuid u = gen();
   const std::string u_str = boost::uuids::to_string(u);
 
-  ss << MRFeatureExtraction<float>::get_share_memory_fs_path()
+  ss << MRFeatureExtraction::get_share_memory_fs_path()
      << '/'
-     << MRFeatureExtraction<float>::get_from_nn_batch_file_name_prefix()
+     << MRFeatureExtraction::get_from_nn_batch_file_name_prefix()
      << u_str;
   std::string file_name = ss.str();
   std::ofstream output_stream(file_name.c_str(), std::ios::binary);
