@@ -26,10 +26,12 @@ public class jMRFeatureExtraction {
   public List<Caffe.Datum> processBatch(Iterator<Caffe.Datum> batch) throws Exception {
     String batchFileName = currentToNNBatchFileNamePrefix + UUID.randomUUID();
     FileOutputStream batchStream = new FileOutputStream(batchFileName);
+    int batchSize = 0;
 
     while (batch.hasNext()) {
       Caffe.Datum datum = batch.next();
       datum.writeDelimitedTo(batchStream);
+      ++batchSize;
     }
 
     batchStream.close();
@@ -47,7 +49,7 @@ public class jMRFeatureExtraction {
 
     resultFileStream.close();
 
-    if (results.size() != batch.size()) {
+    if (results.size() != batchSize) {
       throw new Exception("Input size and output size do not match.");
     }
 
