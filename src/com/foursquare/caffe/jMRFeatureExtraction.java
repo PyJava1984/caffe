@@ -23,12 +23,12 @@ public class jMRFeatureExtraction {
 
   public jMRFeatureExtraction() throws Exception { }
 
-  public List<Caffe.Datum> processBatch(List<Caffe.Datum> batch) throws Exception {
+  public List<Caffe.Datum> processBatch(Iterator<Caffe.Datum> batch) throws Exception {
     String batchFileName = currentToNNBatchFileNamePrefix + UUID.randomUUID();
     FileOutputStream batchStream = new FileOutputStream(batchFileName);
 
-    for (int i = 0; i < batch.size(); ++i) {
-      Caffe.Datum datum = batch.get(i);
+    while (batch.hasNext()) {
+      Caffe.Datum datum = batch.next();
       datum.writeDelimitedTo(batchStream);
     }
 
