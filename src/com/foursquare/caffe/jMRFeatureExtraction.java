@@ -36,7 +36,7 @@ public class jMRFeatureExtraction {
 
     String resultFileName = processBatch(batchFileName);
     FileInputStream resultFileStream = new FileInputStream(resultFileName);
-    List results = new List();
+    List<Caffe.Datum> results = new ArrayList<Caffe.Datum>();
     Caffe.Datum datum = Caffe.Datum.parseDelimitedFrom(resultFileStream);
 
     while (datum != null) {

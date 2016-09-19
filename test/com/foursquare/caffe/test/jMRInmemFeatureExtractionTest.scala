@@ -43,8 +43,6 @@ object jMRInmemFeatureExtractionTestApp extends App {
 
   source.close
 
-  Thread.sleep(5000)
-
   // TODO(zen): add flush method to force sync.
   val ret = featureExtraction.stop()
 
@@ -53,10 +51,6 @@ object jMRInmemFeatureExtractionTestApp extends App {
   resultWriter.close
 
   println("Result writer closed")
-
-  worker.interrupt()
-
-  println("Worker interrupted")
 
   System.exit(0)
 }
