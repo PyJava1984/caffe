@@ -9,7 +9,6 @@
 #include "caffe/common.hpp"
 #include "caffe/net.hpp"
 
-template<typename Dtype>
 class MRFeatureExtraction {
 public:
   MRFeatureExtraction(): stop_signal_(false), feature_extraction_net_(NULL) { }
@@ -43,7 +42,7 @@ public:
     }
   }
 
-  const boost::shared_ptr<caffe::Blob<Dtype> > process_batch(
+  const boost::shared_ptr<caffe::Blob<float> > process_batch(
     std::vector<caffe::Datum> &batch
   );
 
@@ -73,7 +72,7 @@ public:
 
 private:
   volatile bool stop_signal_;
-  caffe::Net<Dtype> *feature_extraction_net_;
+  caffe::Net<float> *feature_extraction_net_;
 };
 
 #endif //CAFFE_MR_FEATURE_EXTRACTION_HPP
