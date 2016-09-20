@@ -24,6 +24,8 @@ object jMRInmemFeatureExtractionTestApp extends App {
     args.lift(3).getOrElse("train_val.prototxt")
   )
 
+  Thread.sleep(1000)
+
   val batch = fileList.flatMap(f => {
     try {
       val img = ImageIO.read(new File(f))
@@ -40,12 +42,15 @@ object jMRInmemFeatureExtractionTestApp extends App {
         None
       }
     }
-  }).asJava
+  }).grouped(50)
 
-  val results = featureExtraction.processBatch(batch)
+  batches.foreach(batch => {
+    val results = featureExtraction.processBatch(batch.toIterator.asJava)
 
-  results.asScala.foreach(featureDatum => {
-    featureDatum.getFloatDataList.asScala.foreach(d => resultWriter.print(s"$d "))
+    results.asScala.foreach(featureDatum => {
+      featureDatum.getFloatDataList.asScala.foreach(d => resultWriter.print(s"$d "))
+      resultWriter.println
+    })
   })
 
   source.close
