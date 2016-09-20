@@ -56,16 +56,29 @@ public class jMRFeatureExtraction {
     return results;
   }
 
-  public RandomAccessFile toNNFile = new RandomAccessFile(getInputPipePath(), "rw");
-  public RandomAccessFile fromNNFile = new RandomAccessFile(getOutputPipePath(), "rw");
+  public RandomAccessFile toNNFile = null;
+  public RandomAccessFile fromNNFile = null;
 
   private int currentToNNBatchId = 0;
   private int currentToNNBatchIndex = -1;
   private String currentToNNBatchFileNamePrefix = "/dev/shm/foursquare_pcv1_in_";
-  private FileOutputStream currentToNNBatchFileStream =
-    new FileOutputStream(currentToNNBatchFileNamePrefix + currentToNNBatchId);
+  private FileOutputStream currentToNNBatchFileStream = null;
+
+  private bool init = false;
+  private void init() throws Exception {
+    toNNFile = new RandomAccessFile(getInputPipePath(), "rw");
+    fromNNFile = new RandomAccessFile(getOutputPipePath(), "rw");
+    currentToNNBatchFileStream =
+      new FileOutputStream(currentToNNBatchFileNamePrefix + currentToNNBatchId);
+
+    init = true;
+  }
 
   public void writeDatum(Caffe.Datum datum) throws Exception {
+    if (!init) {
+      init();
+    }
+
     if (currentToNNBatchIndex == batchSize - 1) {
       currentToNNBatchFileStream.close();
       toNNFile.write((currentToNNBatchFileNamePrefix + currentToNNBatchId + '\n').getBytes());
