@@ -119,6 +119,10 @@ public class jMRFeatureExtraction {
   private int currentFromNNBatchId = -1;
 
   public Caffe.Datum readDatum() throws Exception {
+    if (!init) {
+      init();
+    }
+
     if (currentFromNNBatchFileStream == null) {
       if (fileName != null) {
         new File(fileName).delete();
