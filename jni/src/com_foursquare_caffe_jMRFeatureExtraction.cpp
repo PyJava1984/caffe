@@ -31,6 +31,23 @@ JNIEXPORT jint JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_startFeatu
   return reinterpret_cast<jint>(0);
 }
 
+JNIEXPORT jint JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_runFeatureExtraction(
+  JNIEnv *env,
+  jobject obj,
+  jstring pretrained_binary_proto,
+  jstring feature_extraction_proto
+) {
+  const char* c_pretrained_binary_proto = env->GetStringUTFChars(pretrained_binary_proto, NULL);
+  const char* c_feature_extraction_proto = env->GetStringUTFChars(feature_extraction_proto, NULL);
+
+  int ret = instance.run_feature_extraction_pipeline(c_pretrained_binary_proto, c_feature_extraction_proto);
+
+  env->ReleaseStringUTFChars(pretrained_binary_proto, c_pretrained_binary_proto);
+  env->ReleaseStringUTFChars(feature_extraction_proto, c_feature_extraction_proto);
+
+  return reinterpret_cast<jint>(ret);
+}
+
 JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_processBatch
   (JNIEnv *env, jobject obj, jstring batchFilePath)
 {

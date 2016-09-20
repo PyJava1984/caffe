@@ -9,7 +9,7 @@ import java.util.*;
 public class jMRFeatureExtraction {
   private native int startFeatureExtraction(String pretrainedBinaryProto, String featureExtractionProto);
 
-  private native int runFeatureExtractionAsync(String pretrainedBinaryProto, String featureExtractionProto);
+  private native int runFeatureExtraction(String pretrainedBinaryProto, String featureExtractionProto);
 
   private native String processBatch(String batchFilePath);
 
@@ -46,7 +46,7 @@ public class jMRFeatureExtraction {
     }
 
     if (retry == 10) {
-      throw Exception("Failed to process batch");
+      throw new Exception("Failed to process batch");
     }
 
     FileInputStream resultFileStream = new FileInputStream(resultFileName);
@@ -60,6 +60,9 @@ public class jMRFeatureExtraction {
     }
 
     resultFileStream.close();
+
+    new File(batchFileName).delete();
+    new File(resultFileName).delete();
 
     if (results.size() != batchSize) {
       throw new Exception("Input size and output size do not match.");
@@ -142,10 +145,14 @@ public class jMRFeatureExtraction {
   }
 
   public void start(String pretrainedBinaryProto, String featureExtractionProto) {
+    startFeatureExtraction(pretrainedBinaryProto, featureExtractionProto);
+  }
+
+  public void startAsync(String pretrainedBinaryProto, String featureExtractionProto) {
     featureExtractionThread = new Thread(new Runnable() {
       public void run() {
         try {
-          featureExtractionReturnCode = startFeatureExtraction(pretrainedBinaryProto, featureExtractionProto);
+          featureExtractionReturnCode = runFeatureExtraction(pretrainedBinaryProto, featureExtractionProto);
         } catch(Exception e) {
           featureExtractionReturnCode = 1;
         }

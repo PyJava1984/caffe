@@ -19,7 +19,7 @@ object jMRFeatureExtractionTestApp extends App {
   val fileList = source.getLines
   val resultWriter = new PrintWriter(args.lift(1).getOrElse("jMRFeatureExtractionTestApp_result.txt"))
 
-  featureExtraction.start(
+  featureExtraction.startAsync(
     args.lift(2).getOrElse("bvlc_googlenet.caffemodel"),
     args.lift(3).getOrElse("train_val.prototxt")
   )

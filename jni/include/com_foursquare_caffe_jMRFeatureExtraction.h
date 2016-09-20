@@ -19,6 +19,14 @@ JNIEXPORT jint JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_startFeatu
 
 /*
  * Class:     com_foursquare_caffe_jMRFeatureExtraction
+ * Method:    runFeatureExtraction
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)I
+ */
+JNIEXPORT jint JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_runFeatureExtraction
+  (JNIEnv *, jobject, jstring, jstring);
+
+/*
+ * Class:     com_foursquare_caffe_jMRFeatureExtraction
  * Method:    processBatch
  * Signature: (Ljava/lang/String;)Ljava/lang/String;
  */
