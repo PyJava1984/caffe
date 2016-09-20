@@ -54,7 +54,7 @@ void MRFeatureExtraction::start_feature_extraction_pipeline(
 
   stop_signal_ = false;
 
-  LOG(ERROR)<< "Using GPU";
+  LOG(ERROR) << "Using GPU";
 
   LOG(ERROR) << "Using Device_id=" << 0;
   Caffe::SetDevice(0);
@@ -62,6 +62,8 @@ void MRFeatureExtraction::start_feature_extraction_pipeline(
 
   feature_extraction_net_ = new Net<float>(feature_extraction_proto, caffe::TEST);
   feature_extraction_net_->CopyTrainedLayersFrom(pretrained_binary_proto);
+
+  LOG(ERROR) << "Finished loading model";
 }
 
 const boost::shared_ptr<Blob<float> > MRFeatureExtraction::process_batch(
@@ -69,6 +71,12 @@ const boost::shared_ptr<Blob<float> > MRFeatureExtraction::process_batch(
 ) {
   boost::shared_ptr<caffe::MemoryDataLayer<float>> inmem_layer =
     boost::dynamic_pointer_cast<caffe::MemoryDataLayer<float>>(feature_extraction_net_->layers()[0]);
+
+  if (!inmem_layer) {
+    LOG(ERROR) << "Null inmem layer";
+
+    return boost::shared_ptr<Blob<float>>();
+  }
 
   inmem_layer->AddDatumVector(batch);
   feature_extraction_net_->Forward();

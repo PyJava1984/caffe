@@ -36,7 +36,17 @@ public class jMRFeatureExtraction {
 
     batchStream.close();
 
+    int retry = 0;
     String resultFileName = processBatch(batchFileName);
+    while ((batchFileName == null || batchFileName == "") && retry++ < 10) {
+      Thread.sleep(1000);
+      resultFileName = processBatch(batchFileName);
+    }
+
+    if (retry == 10) {
+      throw Exception("Failed to process batch");
+    }
+
     FileInputStream resultFileStream = new FileInputStream(resultFileName);
     List<Caffe.Datum> results = new ArrayList<Caffe.Datum>();
     Caffe.Datum datum = Caffe.Datum.parseDelimitedFrom(resultFileStream);

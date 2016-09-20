@@ -46,6 +46,10 @@ JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_process
   }
 
   const boost::shared_ptr<caffe::Blob<float> > feature_blob = instance.process_batch(batch);
+  if (!feature_blob) {
+    return env->NewStringUTF("");
+  }
+
   int batch_size = feature_blob->num();
 
   std::stringstream ss;
