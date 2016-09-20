@@ -64,7 +64,7 @@ public class jMRFeatureExtraction {
   private String currentToNNBatchFileNamePrefix = "/dev/shm/foursquare_pcv1_in_";
   private FileOutputStream currentToNNBatchFileStream = null;
 
-  private bool init = false;
+  private Boolean init = false;
   private void init() throws Exception {
     toNNFile = new RandomAccessFile(getInputPipePath(), "rw");
     fromNNFile = new RandomAccessFile(getOutputPipePath(), "rw");
