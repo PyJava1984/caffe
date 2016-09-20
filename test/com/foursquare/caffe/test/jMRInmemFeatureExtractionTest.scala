@@ -26,7 +26,7 @@ object jMRInmemFeatureExtractionTestApp extends App {
 
   Thread.sleep(1000)
 
-  val batch = fileList.flatMap(f => {
+  val batches = fileList.flatMap(f => {
     try {
       val img = ImageIO.read(new File(f))
       val byteArray = img.getRaster.getDataBuffer.asInstanceOf[DataBufferByte].getData
