@@ -42,7 +42,7 @@ layer {
   }
   data_param {
     source: "/home/zen/imagenet/ilsvrc12_val_lmdb"
-    batch_size: 32
+    batch_size: 28
     backend: LMDB
   }
 }
