@@ -28,8 +28,8 @@ layer {
   memory_data_param {
     batch_size: 50
     channels: 3
-    height: 256
-    width: 256
+    height: 224
+    width: 224
   }
   include {
     phase: TEST
