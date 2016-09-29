@@ -70,6 +70,24 @@ void WriteProtoToBinaryFile(const Message& proto, const char* filename) {
 }
 
 #ifdef USE_OPENCV
+cv::Size GetScaledSize(int w, int h, int new_w, int new_h) {
+  if (new_w != new_h) {
+    throw new std::runtime_error("New width must be equal to new height for this version.");
+  }
+
+  if (w == h) {
+    return cv::Size(new_w, new_h);
+  } else {
+    double factor = (double)new_w / (double)std::min(w, h);
+
+    if (w < h) {
+      return cv::Size(new_w, (int)(h * factor));
+    } else {
+      return cv::Size((int)(w * factor), new_h);
+    }
+  }
+}
+
 cv::Mat ReadImageToCVMat(const string& filename,
     const int height, const int width, const bool is_color) {
   cv::Mat cv_img;
@@ -81,7 +99,7 @@ cv::Mat ReadImageToCVMat(const string& filename,
     return cv_img_origin;
   }
   if (height > 0 && width > 0) {
-    cv::resize(cv_img_origin, cv_img, cv::Size(width, height));
+    cv::resize(cv_img_origin, cv_img, GetScaledSize(cv_img.cols, cv_img.rows, width, height));
   } else {
     cv_img = cv_img_origin;
   }
