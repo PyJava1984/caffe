@@ -106,7 +106,7 @@ cv::Mat ReadImageToCVMat(const string& filename,
   return cv_img;
 }
 
-cv::Mat ReadImageBufferToCVMat(std::basic_ostringstream& image_stream,
+cv::Mat ReadImageBufferToCVMat(std::ostringstream& image_stream,
     const int height, const int width, const bool is_color) {
   cv::Mat cv_img;
   int cv_read_flag = (is_color ? CV_LOAD_IMAGE_COLOR :
@@ -128,9 +128,9 @@ cv::Mat ReadImageBufferToCVMat(std::basic_ostringstream& image_stream,
   return cv_img;
 }
 
-cv::Mat ReadImageBufferToCVMat(std::basic_ostringstream& image_stream,
+cv::Mat ReadImageBufferToCVMat(std::ostringstream& image_stream,
     const int height, const int width) {
-  ReadImageBufferToCVMat(image_stream, height, width, true);
+  return ReadImageBufferToCVMat(image_stream, height, width, true);
 }
 
 cv::Mat ReadImageToCVMat(const string& filename,

@@ -31,8 +31,31 @@ public class jMRFeatureExtraction {
 
   private native String _processS3Files(String[] photoIds, String[] s3Files);
 
-  public List<Caffe.Datum> processS3Files(List<String> photoIds, List<String> s3Files) {
-    return null;
+  public List<Caffe.Datum> processS3Files(
+    String[] photoIds,
+    String[] s3Files
+  ) throws Exception {
+    String resultFileName = _processS3Files(photoIds, s3Files);
+
+    FileInputStream resultFileStream = new FileInputStream(resultFileName);
+    List<Caffe.Datum> results = new ArrayList<Caffe.Datum>();
+    Caffe.Datum datum = Caffe.Datum.parseDelimitedFrom(resultFileStream);
+
+    while (datum != null) {
+      results.add(datum);
+
+      datum = Caffe.Datum.parseDelimitedFrom(resultFileStream);
+    }
+
+    resultFileStream.close();
+
+    new File(resultFileName).delete();
+
+    if (results.size() != batchSize) {
+      throw new Exception("Input size and output size do not match.");
+    }
+
+    return results;
   }
 
   public List<Caffe.Datum> processBatch(Iterator<Caffe.Datum> batch) throws Exception {
