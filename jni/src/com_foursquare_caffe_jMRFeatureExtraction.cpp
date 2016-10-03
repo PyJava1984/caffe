@@ -276,6 +276,8 @@ JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction__1proce
     const char* photo_id = env->GetStringUTFChars(str_photo_id, NULL);
     const char* s3_file = env->GetStringUTFChars(str_s3_file, NULL);
 
+    LOG(ERROR) << "Processing photo id [" << photo_id << "] " << "S3 file [" << s3_file << "]";
+
     GetObjectRequest getObjectRequest;
     getObjectRequest.SetBucket(S3Bucket);
 
@@ -286,6 +288,7 @@ JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction__1proce
         ++image_obj_key;
       }
 
+      LOG(ERROR) << "Image obj key [" << image_obj_key << "]";
       getObjectRequest.SetKey(image_obj_key);
     }
 
