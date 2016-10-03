@@ -67,11 +67,19 @@ JNIEXPORT void JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_initialize
 
 /*
  * Class:     com_foursquare_caffe_jMRFeatureExtraction
+ * Method:    destroyS3
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_destroyS3
+(JNIEnv *, jobject);
+
+/*
+ * Class:     com_foursquare_caffe_jMRFeatureExtraction
  * Method:    _processS3Files
- * Signature: (Ljava/util/List;Ljava/util/List;)Ljava/lang/String;
+ * Signature: ([Ljava/lang/String;[Ljava/lang/String;)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction__1processS3Files
-    (JNIEnv *, jobject, jobject, jobject);
+    (JNIEnv *, jobject, jobjectArray, jobjectArray);
 
 #ifdef __cplusplus
 }

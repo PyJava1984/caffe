@@ -106,6 +106,33 @@ cv::Mat ReadImageToCVMat(const string& filename,
   return cv_img;
 }
 
+cv::Mat ReadImageBufferToCVMat(std::basic_ostringstream& image_stream,
+    const int height, const int width, const bool is_color) {
+  cv::Mat cv_img;
+  int cv_read_flag = (is_color ? CV_LOAD_IMAGE_COLOR :
+    CV_LOAD_IMAGE_GRAYSCALE);
+  std::string str = image_stream.str();
+  std::vector<char> data = std::vector<char>(str.begin(), str.end());
+  cv::Mat data_mat = cv::Mat(data);
+  cv::Mat cv_img_origin = cv::imdecode(data_mat, cv_read_flag);
+
+  if (!cv_img_origin.data) {
+    LOG(ERROR) << "Could not open buffer";
+    return cv_img_origin;
+  }
+  if (height > 0 && width > 0) {
+    cv::resize(cv_img_origin, cv_img, GetScaledSize(cv_img.cols, cv_img.rows, width, height));
+  } else {
+    cv_img = cv_img_origin;
+  }
+  return cv_img;
+}
+
+cv::Mat ReadImageBufferToCVMat(std::basic_ostringstream& image_stream,
+    const int height, const int width) {
+  ReadImageBufferToCVMat(image_stream, height, width, true);
+}
+
 cv::Mat ReadImageToCVMat(const string& filename,
     const int height, const int width) {
   return ReadImageToCVMat(filename, height, width, true);

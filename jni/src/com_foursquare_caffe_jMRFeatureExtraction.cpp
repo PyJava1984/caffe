@@ -85,26 +85,18 @@ JNIEXPORT jint JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_runFeature
   return reinterpret_cast<jint>(ret);
 }
 
-JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_processBatch
-  (JNIEnv *env, jobject obj, jstring batchFilePath)
-{
-  const char* batch_file_path = env->GetStringUTFChars(batchFilePath, NULL);
-  int batch_file_fd = open(batch_file_path, O_RDONLY);
-  google::protobuf::io::ZeroCopyInputStream *batch_file_stream =
-    new google::protobuf::io::FileInputStream(batch_file_fd);
-  caffe::Datum datum;
-  std::vector<caffe::Datum> batch;
-
-  while (caffe::db::read_delimited_from(batch_file_stream, &datum) == 0) {
-    batch.push_back(datum);
-  }
-
-  const boost::shared_ptr<caffe::Blob<float> > feature_blob = instance.process_batch(batch);
+jstring save_batch(const boost::shared_ptr<Blob<float> > feature_blob,
+  const std::vector<std::string>& new_ids
+) {
   if (!feature_blob) {
     return env->NewStringUTF("");
   }
 
   int batch_size = feature_blob->num();
+
+  if (!new_ids.empty() && new_ids.size() != batch_size) {
+    throw std::runtime_error("New Id size must be batch size");
+  }
 
   std::stringstream ss;
   boost::uuids::basic_random_generator<boost::mt19937> gen;
@@ -118,11 +110,15 @@ JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_process
   std::string file_name = ss.str();
   std::ofstream output_stream(file_name.c_str(), std::ios::binary);
   google::protobuf::io::ZeroCopyOutputStream* raw_output_stream =
-    new google::protobuf::io::OstreamOutputStream(&output_stream);
+      new google::protobuf::io::OstreamOutputStream(&output_stream);
 
   int dim_features = feature_blob->count() / batch_size;
   const float* feature_blob_data;
   for (int n = 0; n < batch_size; ++n) {
+    if (!new_ids.empty() && new_ids[n] == "") {
+      break;
+    }
+
     datum.set_height(feature_blob->height());
     datum.set_width(feature_blob->width());
     datum.set_channels(feature_blob->channels());
@@ -143,6 +139,25 @@ JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_process
   env->ReleaseStringUTFChars(batchFilePath, batch_file_path);
 
   return env->NewStringUTF(file_name.c_str());
+}
+
+JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_processBatch
+  (JNIEnv *env, jobject obj, jstring batchFilePath)
+{
+  const char* batch_file_path = env->GetStringUTFChars(batchFilePath, NULL);
+  int batch_file_fd = open(batch_file_path, O_RDONLY);
+  google::protobuf::io::ZeroCopyInputStream *batch_file_stream =
+    new google::protobuf::io::FileInputStream(batch_file_fd);
+  caffe::Datum datum;
+  std::vector<caffe::Datum> batch;
+
+  while (caffe::db::read_delimited_from(batch_file_stream, &datum) == 0) {
+    batch.push_back(datum);
+  }
+
+  const boost::shared_ptr<caffe::Blob<float> > feature_blob = instance.process_batch(batch);
+
+  return save_batch(feature_blob);
 }
 
 JNIEXPORT void JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_stopFeatureExtraction(
@@ -215,21 +230,94 @@ JNIEXPORT void JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_initialize
   env->ReleaseStringUTFChars(secret_key, cstr_secret_key);
 }
 
-/* JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction__1processS3Files(
+const char* S3Bucket = "playfoursquare"; // Hard code bucket name for now.
+
+JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction__1processS3Files(
   JNIEnv *env,
   jobject obj,
   jobject photo_ids,
   jobject s3_files
 ) {
-  jclass ArrayList_class = (*env)->FindClass(env, "java/util/ArrayList");
-  const char* c_photo_id;
-  const char* c_s3_file;
+  int photo_id_count = env->GetArrayLength(photo_ids);
+  int s3_file_count = env->GetArrayLength(s3_files);
 
-  // Caffe has a bug that if new width and new height are set,
-  // it will use them to initial network graph, which sometimes leads to invalid graph.
-  // So I hard code the height and width to 256 to match pre-trained model.
+  if (photo_id_count != s3_file_count) {
+    throw std::runtime_error("The count of photo id must be equal to the count of s3 file");
+  }
 
-  cv::Mat cv_img =
+  cv::Mat good_image;
+  std::vector<caffe::Datum> batch;
+  std::vector<std::string> new_ids;
+  int i = 0;
 
-  return env->NewStringUTF("");
-}*/
+  for (; i < photo_id_count; i++) {
+    jstring str_photo_id = (jstring)(env->GetObjectArrayElement(photo_ids, i));
+    jstring str_s3_file = (jstring)(env->GetObjectArrayElement(s3_files, i));
+    const char* photo_id = env->GetStringUTFChars(str_photo_id, NULL);
+    const char* s3_file = env->GetStringUTFChars(str_s3_file, NULL);
+
+    GetObjectRequest getObjectRequest;
+    getObjectRequest.SetBucket(S3Bucket);
+
+    const char* image_obj_key = std::strstr(s3_file, S3Bucket);
+
+    if (!image_obj_key) {
+      while (*image_obj_key == '/' && *image_obj_key != '\0') {
+        ++image_obj_key;
+      }
+
+      getObjectRequest.SetKey(image_obj_key);
+    }
+
+    // because we use std::launch::async we know this will go to another thread
+    auto&& getCallable = _s3_client->GetObjectCallable(getObjectRequest);
+
+    // Sync IO for now.
+    _s3_client->DisableRequestProcessing();
+
+    auto&& getOutcome = getCallable.get();
+    _s3_client->EnableRequestProcessing();
+
+    if (getOutcome.IsSuccess()) {
+      std::ostringstream image_stream;
+      std::copy(
+        istreambuf_iterator<char>(getOutcome.GetResult().GetBody()),
+        istreambuf_iterator<char>(),
+        ostreambuf_iterator<char>(image_stream)
+      );
+
+      // Caffe has a bug that if new width and new height are set,
+      // it will use them to initial network graph, which sometimes leads to invalid graph.
+      // So I hard code the height and width to 256 to match pre-trained model.
+
+      good_image = ReadImageBufferToCVMat(image_stream, 256, 256, true);
+
+      if (good_image.data != NULL) {
+        caffe::Datum datum;
+        CVMatToDatum(good_image, &datum);
+
+        batch.push_back(datum);
+        new_ids.push_back(photo_id);
+      }
+    }
+
+    env->ReleaseStringUTFChars(str_photo_id, photo_id);
+    env->ReleaseStringUTFChars(str_s3_file, s3_file);
+  }
+
+  if (good_image.data == NULL) {
+    return env->NewStringUTF("");
+  } else {
+    caffe::Datum datum;
+    CVMatToDatum(good_image, &datum);
+
+    for ( ; i < photo_id_count; ++i) {
+      batch.push_back(datum);
+      new_ids.push_back("");
+    }
+  }
+
+  const boost::shared_ptr<caffe::Blob<float> > feature_blob = instance.process_batch(batch);
+
+  return save_batch(feature_blob);
+}
