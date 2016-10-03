@@ -103,7 +103,7 @@ JAVA$(PROJECT)_JAR := lib/caffe_jni.jar
 LINKFLAGS := -pthread -fPIC -Wall -I../.build_release/src -I../caffe/src \
 				-I../include -I/usr/local/cuda/include -I./include -I./jni/include \
 				-I./include/caffe/util
-JAVA_FLAGS := -I$(JAVA_JDK)/include -I$(JAVA_JDK)include/linux
+JAVA_FLAGS := -I$(JAVA_JDK)/include -I$(JAVA_JDK)include/linux --std=c++11 
 
 ##############################
 # Derive generated files

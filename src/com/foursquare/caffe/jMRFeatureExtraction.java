@@ -25,6 +25,16 @@ public class jMRFeatureExtraction {
 
   public jMRFeatureExtraction() throws Exception { }
 
+  public native void initializeS3(String accessKey, String secretKey, String s3Bucket);
+
+  public native void destroyS3();
+
+  private native String _processS3Files(String[] photoIds, String[] s3Files);
+
+  public List<Caffe.Datum> processS3Files(List<String> photoIds, List<String> s3Files) {
+    return null;
+  }
+
   public List<Caffe.Datum> processBatch(Iterator<Caffe.Datum> batch) throws Exception {
     String batchFileName = currentToNNBatchFileNamePrefix + UUID.randomUUID();
     FileOutputStream batchStream = new FileOutputStream(batchFileName);

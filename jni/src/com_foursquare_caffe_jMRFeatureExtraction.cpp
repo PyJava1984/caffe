@@ -12,6 +12,43 @@
 #include "mr_feature_extraction.hpp"
 #include "com_foursquare_caffe_jMRFeatureExtraction.h"
 
+#include <aws/core/client/ClientConfiguration.h>
+#include <aws/core/client/CoreErrors.h>
+#include <aws/core/auth/AWSCredentialsProviderChain.h>
+#include <aws/core/platform/Platform.h>
+#include <aws/core/utils/Outcome.h>
+#include <aws/s3/S3Client.h>
+#include <aws/core/utils/ratelimiter/DefaultRateLimiter.h>
+#include <aws/s3/model/DeleteBucketRequest.h>
+#include <aws/s3/model/CreateBucketRequest.h>
+#include <aws/s3/model/HeadBucketRequest.h>
+#include <aws/s3/model/PutObjectRequest.h>
+#include <aws/core/utils/memory/stl/AWSStringStream.h>
+#include <aws/core/utils/HashingUtils.h>
+#include <aws/core/utils/StringUtils.h>
+#include <aws/s3/model/GetObjectRequest.h>
+#include <aws/s3/model/DeleteObjectRequest.h>
+#include <aws/s3/model/HeadObjectRequest.h>
+#include <aws/s3/model/CreateMultipartUploadRequest.h>
+#include <aws/s3/model/UploadPartRequest.h>
+#include <aws/s3/model/CompleteMultipartUploadRequest.h>
+#include <aws/s3/model/ListObjectsRequest.h>
+#include <aws/s3/model/GetBucketLocationRequest.h>
+#include <aws/core/utils/DateTime.h>
+#include <aws/core/http/HttpClientFactory.h>
+#include <aws/core/http/HttpClient.h>
+
+#include <fstream>
+
+#include <aws/core/http/standard/StandardHttpRequest.h>
+
+using namespace Aws::Auth;
+using namespace Aws::Http;
+using namespace Aws::Client;
+using namespace Aws::S3;
+using namespace Aws::S3::Model;
+using namespace Aws::Utils;
+
 MRFeatureExtraction instance; // Singleton
 
 JNIEXPORT jint JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_startFeatureExtraction(
@@ -108,21 +145,91 @@ JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_process
   return env->NewStringUTF(file_name.c_str());
 }
 
-JNIEXPORT void JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_stopFeatureExtraction(JNIEnv *env, jobject obj)
-{
+JNIEXPORT void JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_stopFeatureExtraction(
+  JNIEnv *env,
+  jobject obj
+) {
   instance.stop_feature_extraction_pipeline();
 }
 
-JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_getInputPipePath(JNIEnv *env, jobject obj)
-{
+JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_getInputPipePath(
+  JNIEnv *env,
+  jobject obj
+) {
   const char* inputPipePath = instance.get_input_pipe_path();
 
   return env->NewStringUTF(inputPipePath);
 }
 
-JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_getOutputPipePath(JNIEnv *env, jobject obj)
-{
+JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_getOutputPipePath(
+  JNIEnv *env,
+  jobject obj
+) {
   const char* outputPipePath = instance.get_output_pipe_path();
 
   return env->NewStringUTF(outputPipePath);
 }
+
+static std::shared_ptr<S3Client> _s3_client;
+static std::shared_ptr<Aws::Utils::RateLimits::RateLimiterInterface> _s3_limiter;
+
+#define ALLOCATION_TAG "FoursquarePhotoCNN"
+
+JNIEXPORT void JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_initializeS3(
+  JNIEnv *env,
+  jobject obj,
+  jstring access_key,
+  jstring secret_key,
+  jstring s3_bucket
+) {
+  _s3_limiter = Aws::MakeShared<Aws::Utils::RateLimits::DefaultRateLimiter<>>(ALLOCATION_TAG, 50000000);
+
+  ClientConfiguration config;
+  // config.region = Aws::Region::US_EAST_1;
+  // config.scheme = Scheme::HTTPS;
+  config.connectTimeoutMs = 10000;
+  config.requestTimeoutMs = 10000;
+  config.readRateLimiter = _s3_limiter;
+  config.writeRateLimiter = _s3_limiter;
+  config.maxConnections = 1;
+  // config.maxErrorRetry = 5;
+  config.proxyHost = "proxyout-aux-vip.prod.foursquare.com";
+  config.proxyPort = 80;
+
+  const char* cstr_access_key = env->GetStringUTFChars(access_key, NULL);
+  LOG(ERROR) << "Access key " << cstr_access_key;
+  const char* cstr_secret_key = env->GetStringUTFChars(secret_key, NULL);
+  LOG(ERROR) << "Secret key " << cstr_secret_key;
+
+  // std::shared_ptr<DefaultAWSCredentialsProviderChain> credentials =
+  //   Aws::MakeShared<DefaultAWSCredentialsProviderChain>(ALLOCATION_TAG, config, false);
+
+  _s3_client = Aws::MakeShared<S3Client>(
+    ALLOCATION_TAG,
+    AWSCredentials("access_key_id", "secret_key"),
+    config,
+    false
+  );
+
+  env->ReleaseStringUTFChars(access_key, cstr_access_key);
+  env->ReleaseStringUTFChars(secret_key, cstr_secret_key);
+}
+
+/* JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction__1processS3Files(
+  JNIEnv *env,
+  jobject obj,
+  jobject photo_ids,
+  jobject s3_files
+) {
+  jclass ArrayList_class = (*env)->FindClass(env, "java/util/ArrayList");
+  const char* c_photo_id;
+  const char* c_s3_file;
+
+  // Caffe has a bug that if new width and new height are set,
+  // it will use them to initial network graph, which sometimes leads to invalid graph.
+  // So I hard code the height and width to 256 to match pre-trained model.
+
+  cv::Mat cv_img =
+
+  return env->NewStringUTF("");
+}*/
