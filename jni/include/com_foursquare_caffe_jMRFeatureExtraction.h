@@ -57,30 +57,6 @@ JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_getInpu
 JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_getOutputPipePath
     (JNIEnv *, jobject);
 
-/*
- * Class:     com_foursquare_caffe_jMRFeatureExtraction
- * Method:    initializeS3
- * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
- */
-JNIEXPORT void JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_initializeS3
-(JNIEnv *, jobject, jstring, jstring, jstring);
-
-/*
- * Class:     com_foursquare_caffe_jMRFeatureExtraction
- * Method:    destroyS3
- * Signature: ()V
- */
-JNIEXPORT void JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_destroyS3
-(JNIEnv *, jobject);
-
-/*
- * Class:     com_foursquare_caffe_jMRFeatureExtraction
- * Method:    _processS3Files
- * Signature: ([Ljava/lang/String;[Ljava/lang/String;)Ljava/lang/String;
- */
-JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction__1processS3Files
-    (JNIEnv *, jobject, jobjectArray, jobjectArray);
-
 #ifdef __cplusplus
 }
 #endif
