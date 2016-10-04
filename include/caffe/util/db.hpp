@@ -17,6 +17,11 @@ bool write_delimited_to(
   google::protobuf::io::ZeroCopyOutputStream* rawOutput
 );
 
+bool write_to(
+  const google::protobuf::MessageLite& message,
+  google::protobuf::io::ZeroCopyOutputStream* rawOutput
+);
+
 int read_delimited_from(
   google::protobuf::io::ZeroCopyInputStream* rawInput,
   google::protobuf::MessageLite* message

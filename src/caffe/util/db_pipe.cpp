@@ -34,6 +34,30 @@ namespace caffe {
       return true;
     }
 
+    bool write_to(
+      const google::protobuf::MessageLite& message,
+      google::protobuf::io::ZeroCopyOutputStream* rawOutput
+    ) {
+      // We create a new coded stream for each message.  Don't worry, this is fast.
+      google::protobuf::io::CodedOutputStream output(rawOutput);
+
+      // Write the size.
+      const int size = message.ByteSize();
+
+      uint8_t* buffer = output.GetDirectBufferForNBytesAndAdvance(size);
+      if (buffer != NULL) {
+        // Optimization:  The message fits in one buffer, so use the faster
+        // direct-to-array serialization path.
+        message.SerializeWithCachedSizesToArray(buffer);
+      } else {
+        // Slightly-slower path when the message is multiple buffers.
+        message.SerializeWithCachedSizes(&output);
+        if (output.HadError()) return false;
+      }
+
+      return true;
+    }
+
     int read_delimited_from(
       google::protobuf::io::ZeroCopyInputStream* rawInput,
       google::protobuf::MessageLite* message

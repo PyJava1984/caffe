@@ -25,37 +25,36 @@ public class jMRFeatureExtraction {
 
   public jMRFeatureExtraction() throws Exception { }
 
-  public native void initializeS3(String accessKey, String secretKey, String s3Bucket);
+  private native String _resizeRawImage(byte[] rawImage);
 
-  public native void destroyS3();
+  public static byte[] readFully(DataInputStream imageStream) throws IOException {
+    byte[] buffer = new byte[16 * 1024];
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-  private native String _processS3Files(String[] photoIds, String[] s3Files);
-
-  public List<Caffe.Datum> processS3Files(
-    String[] photoIds,
-    String[] s3Files
-  ) throws Exception {
-    String resultFileName = _processS3Files(photoIds, s3Files);
-
-    FileInputStream resultFileStream = new FileInputStream(resultFileName);
-    List<Caffe.Datum> results = new ArrayList<Caffe.Datum>();
-    Caffe.Datum datum = Caffe.Datum.parseDelimitedFrom(resultFileStream);
-
-    while (datum != null) {
-      results.add(datum);
-
-      datum = Caffe.Datum.parseDelimitedFrom(resultFileStream);
+    int read;
+    while ((read = imageStream.read(buffer)) > 0)
+    {
+      outputStream.write(buffer, 0, read);
     }
 
-    resultFileStream.close();
+    return outputStream.toByteArray();
+  }
 
-    new File(resultFileName).delete();
+  public Caffe.Datum resizeRawImage(DataInputStream imageStream) {
+    try {
+      String resultFileName = _resizeRawImage(readFully(imageStream));
 
-    if (results.size() != batchSize) {
-      throw new Exception("Input size and output size do not match.");
+      FileInputStream resultFileStream = new FileInputStream(resultFileName);
+      Caffe.Datum datum = Caffe.Datum.parseFrom(resultFileStream);
+
+      resultFileStream.close();
+
+      new File(resultFileName).delete();
+
+      return datum;
+    } catch (Exception ex) {
+      return null;
     }
-
-    return results;
   }
 
   public List<Caffe.Datum> processBatch(Iterator<Caffe.Datum> batch) throws Exception {
@@ -70,6 +69,7 @@ public class jMRFeatureExtraction {
     }
 
     batchStream.close();
+    new File(batchFileName).delete();
 
     int retry = 0;
     String resultFileName = processBatch(batchFileName);
@@ -94,7 +94,6 @@ public class jMRFeatureExtraction {
 
     resultFileStream.close();
 
-    new File(batchFileName).delete();
     new File(resultFileName).delete();
 
     if (results.size() != batchSize) {

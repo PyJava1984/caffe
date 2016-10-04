@@ -15,7 +15,7 @@ extern "C" {
  * Signature: (Ljava/lang/String;Ljava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_startFeatureExtraction
-    (JNIEnv *, jobject, jstring, jstring);
+  (JNIEnv *, jobject, jstring, jstring);
 
 /*
  * Class:     com_foursquare_caffe_jMRFeatureExtraction
@@ -23,7 +23,7 @@ JNIEXPORT jint JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_startFeatu
  * Signature: (Ljava/lang/String;Ljava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_runFeatureExtraction
-    (JNIEnv *, jobject, jstring, jstring);
+  (JNIEnv *, jobject, jstring, jstring);
 
 /*
  * Class:     com_foursquare_caffe_jMRFeatureExtraction
@@ -31,7 +31,7 @@ JNIEXPORT jint JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_runFeature
  * Signature: (Ljava/lang/String;)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_processBatch
-    (JNIEnv *, jobject, jstring);
+  (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     com_foursquare_caffe_jMRFeatureExtraction
@@ -39,7 +39,7 @@ JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_process
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_stopFeatureExtraction
-(JNIEnv *, jobject);
+  (JNIEnv *, jobject);
 
 /*
  * Class:     com_foursquare_caffe_jMRFeatureExtraction
@@ -47,7 +47,7 @@ JNIEXPORT void JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_stopFeatur
  * Signature: ()Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_getInputPipePath
-    (JNIEnv *, jobject);
+  (JNIEnv *, jobject);
 
 /*
  * Class:     com_foursquare_caffe_jMRFeatureExtraction
@@ -55,7 +55,15 @@ JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_getInpu
  * Signature: ()Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_getOutputPipePath
-    (JNIEnv *, jobject);
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     com_foursquare_caffe_jMRFeatureExtraction
+ * Method:    _resizeRawImage
+ * Signature: ([B)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction__1resizeRawImage
+  (JNIEnv *, jobject, jbyteArray);
 
 #ifdef __cplusplus
 }

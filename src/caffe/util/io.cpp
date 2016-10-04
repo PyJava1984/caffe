@@ -106,14 +106,12 @@ cv::Mat ReadImageToCVMat(const string& filename,
   return cv_img;
 }
 
-cv::Mat ReadImageBufferToCVMat(std::ostringstream& image_stream,
+cv::Mat ReadImageBufferToCVMat(const std::vector<unsigned char>& image_buffer,
     const int height, const int width, const bool is_color) {
   cv::Mat cv_img;
   int cv_read_flag = (is_color ? CV_LOAD_IMAGE_COLOR :
     CV_LOAD_IMAGE_GRAYSCALE);
-  std::string str = image_stream.str();
-  std::vector<char> data = std::vector<char>(str.begin(), str.end());
-  cv::Mat data_mat = cv::Mat(data);
+  cv::Mat data_mat = cv::Mat(image_buffer);
   cv::Mat cv_img_origin = cv::imdecode(data_mat, cv_read_flag);
 
   if (!cv_img_origin.data) {
@@ -128,9 +126,9 @@ cv::Mat ReadImageBufferToCVMat(std::ostringstream& image_stream,
   return cv_img;
 }
 
-cv::Mat ReadImageBufferToCVMat(std::ostringstream& image_stream,
+cv::Mat ReadImageBufferToCVMat(const std::vector<unsigned char>& image_buffer,
     const int height, const int width) {
-  return ReadImageBufferToCVMat(image_stream, height, width, true);
+  return ReadImageBufferToCVMat(image_buffer, height, width, true);
 }
 
 cv::Mat ReadImageToCVMat(const string& filename,

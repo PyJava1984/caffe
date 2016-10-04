@@ -154,3 +154,40 @@ JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_getOutp
 
   return env->NewStringUTF(outputPipePath);
 }
+
+JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction__1resizeRawImage(
+  JNIEnv *env, 
+  jobject obj, 
+  jbyteArray rawImage
+) {
+  int len = env->GetArrayLength(rawImage);
+  std::vector<unsigned char> buf(len);
+
+  env->GetByteArrayRegion(rawImage, 0, len, reinterpret_cast<jbyte*>(&buf[0]));
+  
+  cv::Mat downSampledImage = caffe::ReadImageBufferToCVMat(buf, 256, 256, true);
+
+  caffe::Datum datum;
+  CVMatToDatum(downSampledImage, &datum);
+
+  std::stringstream ss;
+  boost::uuids::basic_random_generator<boost::mt19937> gen;
+  boost::uuids::uuid u = gen();
+  const std::string u_str = boost::uuids::to_string(u);
+
+  ss << MRFeatureExtraction::get_share_memory_fs_path()
+     << '/'
+     << MRFeatureExtraction::get_from_nn_batch_file_name_prefix()
+     << u_str;
+  std::string file_name = ss.str();
+  std::ofstream output_stream(file_name.c_str(), std::ios::binary);
+  google::protobuf::io::ZeroCopyOutputStream* raw_output_stream =
+      new google::protobuf::io::OstreamOutputStream(&output_stream);
+
+  caffe::db::write_to(datum, raw_output_stream);
+
+  delete raw_output_stream;
+  output_stream.close();
+
+  return env->NewStringUTF(file_name.c_str());
+}
