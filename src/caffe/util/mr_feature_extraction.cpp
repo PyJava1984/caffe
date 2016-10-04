@@ -20,12 +20,49 @@
 #include "caffe/util/io.hpp"
 #include "caffe/util/mr_feature_extraction.hpp"
 
+#include <aws/core/client/ClientConfiguration.h>
+#include <aws/core/client/CoreErrors.h>
+#include <aws/core/auth/AWSCredentialsProviderChain.h>
+#include <aws/core/platform/Platform.h>
+#include <aws/core/utils/Outcome.h>
+#include <aws/s3/S3Client.h>
+#include <aws/core/utils/ratelimiter/DefaultRateLimiter.h>
+#include <aws/s3/model/DeleteBucketRequest.h>
+#include <aws/s3/model/CreateBucketRequest.h>
+#include <aws/s3/model/HeadBucketRequest.h>
+#include <aws/s3/model/PutObjectRequest.h>
+#include <aws/core/utils/memory/stl/AWSStringStream.h>
+#include <aws/core/utils/HashingUtils.h>
+#include <aws/core/utils/StringUtils.h>
+#include <aws/s3/model/GetObjectRequest.h>
+#include <aws/s3/model/DeleteObjectRequest.h>
+#include <aws/s3/model/HeadObjectRequest.h>
+#include <aws/s3/model/CreateMultipartUploadRequest.h>
+#include <aws/s3/model/UploadPartRequest.h>
+#include <aws/s3/model/CompleteMultipartUploadRequest.h>
+#include <aws/s3/model/ListObjectsRequest.h>
+#include <aws/s3/model/GetBucketLocationRequest.h>
+#include <aws/core/utils/DateTime.h>
+#include <aws/core/http/HttpClientFactory.h>
+#include <aws/core/http/HttpClient.h>
+
+#include <fstream>
+
+#include <aws/core/http/standard/StandardHttpRequest.h>
+
 using caffe::Blob;
 using caffe::Caffe;
 using caffe::Datum;
 using caffe::Net;
 using std::string;
 namespace db = caffe::db;
+
+using namespace Aws::Auth;
+using namespace Aws::Http;
+using namespace Aws::Client;
+using namespace Aws::S3;
+using namespace Aws::S3::Model;
+using namespace Aws::Utils;
 
 int MRFeatureExtraction::run_feature_extraction_pipeline(
   const char* pretrained_binary_proto,
@@ -183,4 +220,46 @@ int MRFeatureExtraction::feature_extraction_pipeline(
 
   LOG(ERROR)<< "Successfully extracted the features!";
   return 0;
+}
+
+static std::shared_ptr<S3Client> _s3_client;
+static std::shared_ptr<Aws::Utils::RateLimits::RateLimiterInterface> _s3_limiter;
+
+#define ALLOCATION_TAG "FoursquarePhotoCNN"
+
+void MRFeatureExtraction::destroy_s3() {
+  _s3_client = nullptr;
+  _s3_limiter = nullptr;
+}
+
+void MRFeatureExtraction::initialize_s3(
+  std::string access_key,
+  std::string secret_key,
+  std::string s3_bucket
+) {
+  _s3_limiter = Aws::MakeShared<Aws::Utils::RateLimits::DefaultRateLimiter<>>(ALLOCATION_TAG, 50000000);
+
+  ClientConfiguration config;
+  // config.region = Aws::Region::US_EAST_1;
+  // config.scheme = Scheme::HTTPS;
+  config.connectTimeoutMs = 10000;
+  config.requestTimeoutMs = 10000;
+  config.readRateLimiter = _s3_limiter;
+  config.writeRateLimiter = _s3_limiter;
+  config.maxConnections = 1;
+  // config.maxErrorRetry = 5;
+  config.proxyHost = "proxyout-aux-vip.prod.foursquare.com";
+  config.proxyPort = 80;
+
+  const char* cstr_access_key = access_key.c_str();
+  LOG(ERROR) << "Access key " << cstr_access_key;
+  const char* cstr_secret_key = secret_key.c_str();
+  LOG(ERROR) << "Secret key " << cstr_secret_key;
+
+  _s3_client = Aws::MakeShared<S3Client>(
+    ALLOCATION_TAG,
+    AWSCredentials(cstr_access_key, cstr_secret_key),
+    config,
+    false
+  );
 }

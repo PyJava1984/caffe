@@ -42,6 +42,14 @@ public:
     }
   }
 
+  void destroy_s3();
+
+  void initialize_s3(
+    std::string access_key,
+    std::string secret_key,
+    std::string s3_bucket
+  );
+
   const boost::shared_ptr<caffe::Blob<float> > process_batch(
     std::vector<caffe::Datum> &batch
   );
