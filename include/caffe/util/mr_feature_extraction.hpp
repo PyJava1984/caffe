@@ -50,6 +50,11 @@ public:
     std::string s3_bucket
   );
 
+  std::ostringstream get_image_stream_s3(
+    std::string photo_id,
+    std::string s3_file
+  );
+
   const boost::shared_ptr<caffe::Blob<float> > process_batch(
     std::vector<caffe::Datum> &batch
   );

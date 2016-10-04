@@ -180,7 +180,6 @@ JNIEXPORT void JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_initialize
   env->ReleaseStringUTFChars(secret_key, cstr_secret_key);
 }
 
-const char* S3Bucket = "playfoursquare"; // Hard code bucket name for now.
 const int CaffeModelBatchSize = 50;
 
 JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction__1processS3Files(
@@ -211,39 +210,8 @@ JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction__1proce
     const char* photo_id = env->GetStringUTFChars(str_photo_id, NULL);
     const char* s3_file = env->GetStringUTFChars(str_s3_file, NULL);
 
-    LOG(ERROR) << "Processing photo id [" << photo_id << "] " << "S3 file [" << s3_file << "]";
-
-    GetObjectRequest getObjectRequest;
-    getObjectRequest.SetBucket(S3Bucket);
-
-    const char* image_obj_key = std::strstr(s3_file, S3Bucket);
-
-    if (!image_obj_key) {
-      while (*image_obj_key == '/' && *image_obj_key != '\0') {
-        ++image_obj_key;
-      }
-
-      LOG(ERROR) << "Image obj key [" << image_obj_key << "]";
-      getObjectRequest.SetKey(image_obj_key);
-    }
-
-    // because we use std::launch::async we know this will go to another thread
-    auto&& getCallable = _s3_client->GetObjectCallable(getObjectRequest);
-
-    // Sync IO for now.
-    _s3_client->DisableRequestProcessing();
-
-    auto&& getOutcome = getCallable.get();
-    _s3_client->EnableRequestProcessing();
-
-    if (getOutcome.IsSuccess()) {
-      std::ostringstream image_stream;
-      std::copy(
-        std::istreambuf_iterator<char>(getOutcome.GetResult().GetBody()),
-        std::istreambuf_iterator<char>(),
-        std::ostreambuf_iterator<char>(image_stream)
-      );
-
+    std::ostringstream image_stream = instance.get_image_stream_s3(photo_id, s3_file);
+    if (image_stream.eof()) {
       // Caffe has a bug that if new width and new height are set,
       // it will use them to initial network graph, which sometimes leads to invalid graph.
       // So I hard code the height and width to 256 to match pre-trained model.

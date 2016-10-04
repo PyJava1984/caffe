@@ -263,3 +263,47 @@ void MRFeatureExtraction::initialize_s3(
     false
   );
 }
+
+const char* S3Bucket = "playfoursquare"; // Hard code bucket name for now.
+
+std::ostringstream MRFeatureExtraction::get_image_stream_s3(
+  std::string photo_id,
+  std::string s3_file
+) {
+  LOG(ERROR) << "Processing photo id [" << photo_id << "] " << "S3 file [" << s3_file << "]";
+
+  GetObjectRequest getObjectRequest;
+  getObjectRequest.SetBucket(S3Bucket);
+
+  const char* image_obj_key = std::strstr(s3_file.c_str(), S3Bucket);
+
+  if (!image_obj_key) {
+    while (*image_obj_key == '/' && *image_obj_key != '\0') {
+      ++image_obj_key;
+    }
+
+    LOG(ERROR) << "Image obj key [" << image_obj_key << "]";
+    getObjectRequest.SetKey(image_obj_key);
+  }
+
+  // because we use std::launch::async we know this will go to another thread
+  auto&& getCallable = _s3_client->GetObjectCallable(getObjectRequest);
+
+  // Sync IO for now.
+  _s3_client->DisableRequestProcessing();
+
+  auto&& getOutcome = getCallable.get();
+  _s3_client->EnableRequestProcessing();
+
+  std::ostringstream image_stream;
+
+  if (getOutcome.IsSuccess()) {
+    std::copy(
+      std::istreambuf_iterator<char>(getOutcome.GetResult().GetBody()),
+      std::istreambuf_iterator<char>(),
+      std::ostreambuf_iterator<char>(image_stream)
+    );
+  }
+
+  return image_stream;
+}
