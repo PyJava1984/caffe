@@ -103,7 +103,7 @@ JAVA$(PROJECT)_JAR := lib/caffe_jni.jar
 LINKFLAGS := -pthread -fPIC -Wall -I../.build_release/src -I../caffe/src \
 				-I../include -I/usr/local/cuda/include -I./include -I./jni/include \
 				-I./include/caffe/util
-JAVA_FLAGS := -I$(JAVA_JDK)/include -I$(JAVA_JDK)include/linux --std=c++11 
+JAVA_FLAGS := -I$(JAVA_JDK)/include -I$(JAVA_JDK)include/linux --std=c++11 -frtti 
 
 ##############################
 # Derive generated files
@@ -416,7 +416,7 @@ CXXFLAGS += -MMD -MP
 
 # Complete build flags.
 COMMON_FLAGS += $(foreach includedir,$(INCLUDE_DIRS),-I$(includedir))
-CXXFLAGS += -std=c++11 -pthread -fPIC $(COMMON_FLAGS) $(WARNINGS)
+CXXFLAGS += -std=c++11 -pthread -fPIC $(COMMON_FLAGS) $(WARNINGS) -frtti
 NVCCFLAGS += -ccbin=$(CXX) -Xcompiler -fPIC $(COMMON_FLAGS)
 # mex may invoke an older gcc that is too liberal with -Wuninitalized
 MATLAB_CXXFLAGS := $(CXXFLAGS) -Wno-uninitialized
@@ -655,7 +655,7 @@ $(PY_PROTO_INIT): | $(PY_PROTO_BUILD_DIR)
 	touch $(PY_PROTO_INIT)
 
 $(JAVA$(PROJECT)_SO): $(JAVA$(PROJECT)_SRC)
-	$(CXX) -shared -o .build_release/$@ $(JAVA$(PROJECT)_SRC) $(LINKFLAGS) $(JAVA_FLAGS) -L$(LIB_BUILD_DIR) -lcaffe
+	$(CXX) -shared -o .build_release/$@ $(JAVA$(PROJECT)_SRC) $(LINKFLAGS) $(JAVA_FLAGS) -L$(LIB_BUILD_DIR) -lcaffe -laws-cpp-sdk-core -laws-cpp-sdk-s3 -laws-cpp-sdk-acm -DCUSTOM_MEMORY_MANAGEMENT
 	javac -d . -cp lib/protobuf-java-2.5.0.jar $(LIB_BUILD_DIR)/../src/caffe/proto/caffe/Caffe.java
 	jar cf $(LIB_BUILD_DIR)/caffe_protobuf.jar caffe/*
 	rm -r caffe
