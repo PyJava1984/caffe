@@ -78,7 +78,6 @@ public class jMRFeatureExtraction {
     }
 
     batchStream.close();
-    new File(batchFileName).delete();
 
     int retry = 0;
     String resultFileName = processBatch(batchFileName);
@@ -90,6 +89,8 @@ public class jMRFeatureExtraction {
     if (retry == 10) {
       throw new Exception("Failed to process batch");
     }
+
+    new File(batchFileName).delete();
 
     FileInputStream resultFileStream = new FileInputStream(resultFileName);
     List<Caffe.Datum> results = new ArrayList<Caffe.Datum>();
