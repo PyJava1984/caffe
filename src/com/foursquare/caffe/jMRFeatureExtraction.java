@@ -40,7 +40,7 @@ public class jMRFeatureExtraction {
     return outputStream.toByteArray();
   }
 
-  public Caffe.Datum resizeRawImage(DataInputStream imageStream) {
+  public static Caffe.Datum resizeRawImage(DataInputStream imageStream) {
     try {
       String resultFileName = _resizeRawImage(readFully(imageStream));
 
