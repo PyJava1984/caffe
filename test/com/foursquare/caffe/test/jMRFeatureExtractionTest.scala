@@ -73,7 +73,7 @@ object jMRFeatureExtractionTestApp extends App {
   Thread.sleep(5000)
 
   // TODO(zen): add flush method to force sync.
-  val ret = featureExtraction.stop()
+  val ret = featureExtraction.stopAsync()
 
   println(ret)
 

@@ -55,7 +55,6 @@ object jMRInmemFeatureExtractionTestApp extends App {
 
   source.close
 
-  // TODO(zen): add flush method to force sync.
   val ret = featureExtraction.stop()
 
   println(ret)

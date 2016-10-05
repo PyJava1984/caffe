@@ -190,40 +190,64 @@ public class jMRFeatureExtraction {
     return datum;
   }
 
+  private bool started = false;
   public void start(String pretrainedBinaryProto, String featureExtractionProto) {
-    startFeatureExtraction(pretrainedBinaryProto, featureExtractionProto);
-  }
-
-  public void startAsync(String pretrainedBinaryProto, String featureExtractionProto) {
-    featureExtractionThread = new Thread(new Runnable() {
-      public void run() {
-        try {
-          featureExtractionReturnCode = runFeatureExtraction(pretrainedBinaryProto, featureExtractionProto);
-        } catch(Exception e) {
-          featureExtractionReturnCode = 1;
-        }
-      }
-    });
-
-    featureExtractionThread.start();
-  }
-
-  public int stop() throws Exception {
-    stopFeatureExtraction();
-    Thread.sleep(1000);
-
-    try {
-      featureExtractionThread.join(5000);
-    } catch(Exception e) {
-      return -1;
-    } finally { 
-      System.err.println("Closing pipes");
-
-      toNNFile.close();
-      fromNNFile.close();
+    if (!started) {
+      startFeatureExtraction(pretrainedBinaryProto, featureExtractionProto);
+      started = true;
     }
+  }
 
-    return featureExtractionReturnCode;
+  private bool asyncStarted = false;
+  public void startAsync(String pretrainedBinaryProto, String featureExtractionProto) {
+    if (!asyncStarted) {
+      featureExtractionThread = new Thread(new Runnable()
+      {
+        public void run() {
+          try {
+            featureExtractionReturnCode = runFeatureExtraction(pretrainedBinaryProto, featureExtractionProto);
+          } catch (Exception e) {
+            featureExtractionReturnCode = 1;
+          }
+        }
+      });
+
+      featureExtractionThread.start();
+      asyncStarted = true;
+    }
+  }
+
+  public void stop() {
+    if (started) {
+      stopFeatureExtraction();
+      started = false;
+    }
+  }
+
+  public int stopAsync() throws Exception {
+    if (asyncStarted) {
+      stopFeatureExtraction();
+      Thread.sleep(1000);
+
+      try {
+        featureExtractionThread.join(5000);
+      } catch (Exception e) {
+        asyncStarted = false;
+
+        return -1;
+      } finally {
+        System.err.println("Closing pipes");
+
+        toNNFile.close();
+        fromNNFile.close();
+      }
+
+      asyncStarted = false;
+
+      return featureExtractionReturnCode;
+    } else {
+      return 1;
+    }
   }
 
   static {
