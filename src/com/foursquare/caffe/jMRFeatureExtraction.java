@@ -25,7 +25,7 @@ public class jMRFeatureExtraction {
 
   public jMRFeatureExtraction() throws Exception { }
 
-  private native String _resizeRawImage(byte[] rawImage);
+  private static native String _resizeRawImage(byte[] rawImage);
 
   public static byte[] readFully(DataInputStream imageStream) throws IOException {
     byte[] buffer = new byte[16 * 1024];
