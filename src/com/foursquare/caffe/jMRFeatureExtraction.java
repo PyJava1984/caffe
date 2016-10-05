@@ -190,7 +190,7 @@ public class jMRFeatureExtraction {
     return datum;
   }
 
-  private bool started = false;
+  private Boolean started = false;
   public void start(String pretrainedBinaryProto, String featureExtractionProto) {
     if (!started) {
       startFeatureExtraction(pretrainedBinaryProto, featureExtractionProto);
@@ -198,7 +198,7 @@ public class jMRFeatureExtraction {
     }
   }
 
-  private bool asyncStarted = false;
+  private Boolean asyncStarted = false;
   public void startAsync(String pretrainedBinaryProto, String featureExtractionProto) {
     if (!asyncStarted) {
       featureExtractionThread = new Thread(new Runnable()
