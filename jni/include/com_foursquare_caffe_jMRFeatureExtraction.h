@@ -63,7 +63,7 @@ JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_getOutp
  * Signature: ([B)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction__1resizeRawImage
-  (JNIEnv *, jclass, jbyteArray);
+  (JNIEnv *, jobject, jbyteArray);
 
 #ifdef __cplusplus
 }

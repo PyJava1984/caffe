@@ -13,7 +13,7 @@ import javax.imageio.ImageIO
 import scala.io.Source
 
 object jMRInmemFeatureExtractionTestApp extends App {
-  val featureExtraction = new jMRFeatureExtraction
+  val featureExtraction = jMRFeatureExtraction.Instance()
   val fileListPath = args(0)
   val source = Source.fromFile(fileListPath)
   val fileList = source.getLines

@@ -23,11 +23,20 @@ public class jMRFeatureExtraction {
 
   public final static int batchSize = 50;
 
-  public jMRFeatureExtraction() throws Exception { }
+  protected jMRFeatureExtraction() throws Exception { }
 
-  private static native String _resizeRawImage(byte[] rawImage);
+  private static jMRFeatureExtraction _instance = null;
+  public static jMRFeatureExtraction Instance() throws Exception {
+    if (_instance == null) {
+      _instance = new jMRFeatureExtraction();
+    }
 
-  public static byte[] readFully(DataInputStream imageStream) throws IOException {
+    return _instance;
+  }
+
+  private native String _resizeRawImage(byte[] rawImage);
+
+  public static byte[] readFully(InputStream imageStream) throws IOException {
     byte[] buffer = new byte[16 * 1024];
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -40,9 +49,9 @@ public class jMRFeatureExtraction {
     return outputStream.toByteArray();
   }
 
-  public static Caffe.Datum resizeRawImage(DataInputStream imageStream) {
+  public static Caffe.Datum resizeRawImage(InputStream imageStream) {
     try {
-      String resultFileName = _resizeRawImage(readFully(imageStream));
+      String resultFileName = _instance._resizeRawImage(readFully(imageStream));
 
       FileInputStream resultFileStream = new FileInputStream(resultFileName);
       Caffe.Datum datum = Caffe.Datum.parseFrom(resultFileStream);
