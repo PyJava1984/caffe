@@ -53,6 +53,10 @@ public class jMRFeatureExtraction {
     try {
       String resultFileName = _resizeRawImage(readFully(imageStream));
 
+      if (resultFileName == "") {
+        return null;
+      }
+
       FileInputStream resultFileStream = new FileInputStream(resultFileName);
       Caffe.Datum datum = Caffe.Datum.parseFrom(resultFileStream);
 
