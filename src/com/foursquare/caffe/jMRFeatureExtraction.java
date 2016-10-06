@@ -49,9 +49,9 @@ public class jMRFeatureExtraction {
     return outputStream.toByteArray();
   }
 
-  public static Caffe.Datum resizeRawImage(InputStream imageStream) {
+  public Caffe.Datum resizeRawImage(InputStream imageStream) {
     try {
-      String resultFileName = _instance._resizeRawImage(readFully(imageStream));
+      String resultFileName = _resizeRawImage(readFully(imageStream));
 
       FileInputStream resultFileStream = new FileInputStream(resultFileName);
       Caffe.Datum datum = Caffe.Datum.parseFrom(resultFileStream);
