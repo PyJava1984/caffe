@@ -145,16 +145,17 @@ namespace caffe {
       ++fake_key_;
     }
 
-    std::atomic<long> PipeTransaction::current_from_nn_batch_id_(0l);
-
     void PipeTransaction::Commit() {
       int commit_count = 0;
+      boost::uuids::basic_random_generator<boost::mt19937> gen;
+      boost::uuids::uuid u = gen();
+      std::string uuid_str = boost::uuids::to_string(u);
       stringstream ss;
 
       ss << MRFeatureExtraction::get_share_memory_fs_path()
          << '/'
          << MRFeatureExtraction::get_from_nn_batch_file_name_prefix()
-         << current_from_nn_batch_id_;
+         << uuid_str;
       std::string file_name = ss.str();
       std::ofstream output_stream(file_name.c_str(), std::ios::binary);
       google::protobuf::io::ZeroCopyOutputStream* raw_output_stream =
@@ -179,8 +180,6 @@ namespace caffe {
       if (commit_count > MRFeatureExtraction::get_batch_size()) {
         throw std::runtime_error("Batch size larger than batch size.");
       }
-
-      ++current_from_nn_batch_id_;
 
       opened_source_queue_lock_.lock();
       if (opened_source_queue_.empty()) {

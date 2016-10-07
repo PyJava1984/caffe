@@ -6,12 +6,27 @@
 #define CAFFE_MR_FEATURE_EXTRACTION_HPP
 
 #include <string>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/uuid/random_generator.hpp>
+
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "caffe/common.hpp"
 #include "caffe/net.hpp"
 
 class MRFeatureExtraction {
 public:
-  MRFeatureExtraction(): stop_signal_(false), feature_extraction_net_(NULL) { }
+  MRFeatureExtraction(): stop_signal_(false), feature_extraction_net_(NULL) {
+    boost::uuids::basic_random_generator<boost::mt19937> gen;
+    boost::uuids::uuid u = gen();
+    uuid_str_ = boost::uuids::to_string(u);
+
+    ::mkfifo(get_input_pipe_path().c_str(), 0666);
+    ::mkfifo(get_output_pipe_path().c_str(), 0666);
+  }
 
   int feature_extraction_pipeline(
     std::string pretrained_binary_proto,
@@ -46,12 +61,20 @@ public:
     std::vector<caffe::Datum> &batch
   );
 
-  const char* get_input_pipe_path() {
-    return "/tmp/foursquare_pcv1_input_pipe";
+  const std::string get_input_pipe_path() {
+    return "/tmp/foursquare_pcv1_input_pipe_" + uuid_str_;
   }
 
-  const char* get_output_pipe_path() {
-    return "/tmp/foursquare_pcv1_output_pipe";
+  const std::string get_output_pipe_path() {
+    return "/tmp/foursquare_pcv1_output_pipe_" + uuid_str_;
+  }
+
+  static const std::string get_to_nn_batch_file_name_prefix() {
+    return "foursquare_pcv1_in_";
+  }
+
+  static const std::string get_from_nn_batch_file_name_prefix() {
+    return "foursquare_pcv1_out_";
   }
 
   static const int get_batch_size() {
@@ -59,20 +82,13 @@ public:
   }
 
   static const std::string get_share_memory_fs_path() {
-    return std::string("/dev/shm");
-  }
-
-  static const std::string get_to_nn_batch_file_name_prefix() {
-    return std::string("foursquare_pcv1_in_");
-  }
-
-  static const std::string get_from_nn_batch_file_name_prefix() {
-    return std::string("foursquare_pcv1_out_");
+    return "/dev/shm";
   }
 
 private:
   volatile bool stop_signal_;
   caffe::Net<float> *feature_extraction_net_;
+  std::string uuid_str_;
 };
 
 #endif //CAFFE_MR_FEATURE_EXTRACTION_HPP

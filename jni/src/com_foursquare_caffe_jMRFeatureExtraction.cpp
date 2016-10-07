@@ -11,7 +11,6 @@
 #include "caffe/blob.hpp"
 #include "caffe/util/db.hpp"
 #include "caffe/util/io.hpp"
-#include "caffe/proto/caffe.pb.h"
 
 #include "mr_feature_extraction.hpp"
 #include "com_foursquare_caffe_jMRFeatureExtraction.h"
@@ -141,18 +140,18 @@ JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_getInpu
   JNIEnv *env,
   jobject obj
 ) {
-  const char* inputPipePath = instance.get_input_pipe_path();
+  const std::string inputPipePath = instance.get_input_pipe_path();
 
-  return env->NewStringUTF(inputPipePath);
+  return env->NewStringUTF(inputPipePath.c_str());
 }
 
 JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_getOutputPipePath(
   JNIEnv *env,
   jobject obj
 ) {
-  const char* outputPipePath = instance.get_output_pipe_path();
+  const std::string outputPipePath = instance.get_output_pipe_path();
 
-  return env->NewStringUTF(outputPipePath);
+  return env->NewStringUTF(outputPipePath.c_str());
 }
 
 JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction__1resizeRawImage(

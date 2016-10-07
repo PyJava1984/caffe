@@ -17,6 +17,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/uuid/random_generator.hpp>
+
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
@@ -164,10 +167,6 @@ namespace caffe {
       ~PipeTransaction() {
         close(out_fd_);
       }
-
-    private:
-      // TODO(zen): use context to wrap the state
-      static std::atomic<long> current_from_nn_batch_id_;
 
     private:
       int out_fd_;

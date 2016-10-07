@@ -105,7 +105,7 @@ int MRFeatureExtraction::feature_extraction_pipeline(
   }
 
   boost::shared_ptr<Net<float> > feature_extraction_net(
-      new Net<float>(feature_extraction_proto, caffe::TEST));
+    new Net<float>(feature_extraction_proto, caffe::TEST));
   feature_extraction_net->CopyTrainedLayersFrom(pretrained_binary_proto);
 
   std::vector<std::string> blob_names;
@@ -142,7 +142,7 @@ int MRFeatureExtraction::feature_extraction_pipeline(
     feature_extraction_net->Forward();
     for (int i = 0; i < num_blobs; ++i) {
       const boost::shared_ptr<Blob<float> > feature_blob =
-          feature_extraction_net->blob_by_name(blob_names[i]);
+        feature_extraction_net->blob_by_name(blob_names[i]);
       int batch_size = feature_blob->num();
       int dim_features = feature_blob->count() / batch_size;
       const float* feature_blob_data;
