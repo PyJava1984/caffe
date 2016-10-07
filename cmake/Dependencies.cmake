@@ -1,6 +1,11 @@
 # This list is required for static linking and exported to CaffeConfig.cmake
 set(Caffe_LINKER_LIBS "")
 
+# ---[ JNI
+find_package(JNI)
+include_directories(SYSTEM ${JNI_INCLUDE_DIRS})
+list(APPEND Caffe_LINKER_LIBS ${JNI_LIBRARIES})
+
 # ---[ Boost
 find_package(Boost 1.46 REQUIRED COMPONENTS system thread filesystem)
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
