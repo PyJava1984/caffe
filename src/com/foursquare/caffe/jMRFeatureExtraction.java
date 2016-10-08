@@ -133,7 +133,7 @@ public class jMRFeatureExtraction {
     currentToNNBatchFileStream =
       new FileOutputStream(currentToNNBatchFileNamePrefix + currentToNNBatchId);
 
-    init = true;
+    _init = true;
   }
 
   public void writeDatum(Caffe.Datum datum) throws Exception {
