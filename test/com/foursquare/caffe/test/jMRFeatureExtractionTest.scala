@@ -21,7 +21,7 @@ object jMRFeatureExtractionTestApp extends App {
 
   featureExtraction.startAsync(
     args.lift(2).getOrElse("bvlc_googlenet.caffemodel"),
-    args.lift(3).getOrElse("deploy.prototxt")
+    args.lift(3).getOrElse("deploy_pipe.prototxt")
   )
 
   val worker = new Thread(new Runnable() {
@@ -59,7 +59,7 @@ object jMRFeatureExtractionTestApp extends App {
     val filledFs = if (fs.size == 50) {
       fs
     } else {
-      fs.fill(50 - fs.size)(fs.head)
+      fs ++ Array.fill(50 - fs.size)(fs.head)
     }
 
     filledFs.foreach(f => {
