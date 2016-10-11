@@ -21,7 +21,7 @@ object jMRFeatureExtractionTestApp extends App {
 
   featureExtraction.startAsync(
     args.lift(2).getOrElse("bvlc_googlenet.caffemodel"),
-    args.lift(3).getOrElse("train_val.prototxt")
+    args.lift(3).getOrElse("deploy.prototxt")
   )
 
   val worker = new Thread(new Runnable() {
@@ -55,24 +55,31 @@ object jMRFeatureExtractionTestApp extends App {
   println("Start worker")
   worker.start()
 
-  fileList.foreach(f => {
-    val img = ImageIO.read(new File(f))
-    val byteArray = img.getRaster.getDataBuffer.asInstanceOf[DataBufferByte].getData
-    val datum = Datum.newBuilder
-      .setData(ByteString.copyFrom(byteArray))
-      .setHeight(img.getHeight)
-      .setWidth(img.getWidth)
-      .setChannels(3)
-      .build()
+  fileList.grouped(50).foreach(fs => {
+    val filledFs = if (fs.size == 50) {
+      fs
+    } else {
+      fs.fill(50 - fs.size)(fs.head)
+    }
 
-    featureExtraction.writeDatum(datum)
+    filledFs.foreach(f => {
+      val img = ImageIO.read(new File(f))
+      val byteArray = img.getRaster.getDataBuffer.asInstanceOf[DataBufferByte].getData
+      val datum = Datum.newBuilder
+        .setData(ByteString.copyFrom(byteArray))
+        .setHeight(img.getHeight)
+        .setWidth(img.getWidth)
+        .setChannels(3)
+        .build()
+
+      featureExtraction.writeDatum(datum)
+    })
   })
 
   source.close
 
   Thread.sleep(5000)
 
-  // TODO(zen): add flush method to force sync.
   val ret = featureExtraction.stopAsync()
 
   println(ret)
