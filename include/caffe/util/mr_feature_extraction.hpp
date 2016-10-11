@@ -57,8 +57,9 @@ public:
     }
   }
 
-  const boost::shared_ptr<caffe::Blob<float> > process_batch(
-    std::vector<caffe::Datum> &batch
+  const std::vector<boost::shared_ptr<caffe::Blob<float>>> process_batch(
+    std::vector<caffe::Datum> &batch,
+    const std::vector<std::string> &layers
   );
 
   const std::string get_input_pipe_path() {

@@ -66,22 +66,27 @@ void MRFeatureExtraction::start_feature_extraction_pipeline(
   LOG(ERROR) << "Finished loading model";
 }
 
-const boost::shared_ptr<Blob<float> > MRFeatureExtraction::process_batch(
-  std::vector<caffe::Datum> &batch
+const std::vector<boost::shared_ptr<caffe::Blob<float>>> MRFeatureExtraction::process_batch(
+  std::vector<caffe::Datum> &batch,
+  const std::vector<std::string> &layers
 ) {
   boost::shared_ptr<caffe::MemoryDataLayer<float>> inmem_layer =
     boost::dynamic_pointer_cast<caffe::MemoryDataLayer<float>>(feature_extraction_net_->layers()[0]);
+  std::vector<boost::shared_ptr<Blob<float>>> results;
 
   if (!inmem_layer) {
     LOG(ERROR) << "Null inmem layer";
-
-    return boost::shared_ptr<Blob<float>>();
+    return results;
   }
 
   inmem_layer->AddDatumVector(batch);
   feature_extraction_net_->Forward();
 
-  return feature_extraction_net_->blob_by_name("pool5/7x7_s1");
+  for (int i = 0; i < layers.size(); ++i) {
+    results.push_back(feature_extraction_net_->blob_by_name(layers[i]));
+  }
+
+  return results;
 }
 
 int MRFeatureExtraction::feature_extraction_pipeline(
@@ -115,8 +120,8 @@ int MRFeatureExtraction::feature_extraction_pipeline(
 
   for (size_t i = 0; i < num_blobs; i++) {
     CHECK(feature_extraction_net->has_blob(blob_names[i]))
-        << "Unknown feature blob name " << blob_names[i]
-        << " in the network " << feature_extraction_proto;
+      << "Unknown feature blob name " << blob_names[i]
+      << " in the network " << feature_extraction_proto;
   }
 
   LOG(INFO)<< "Opening pipe " << target_pipe_path;

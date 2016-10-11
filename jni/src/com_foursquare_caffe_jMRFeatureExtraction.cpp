@@ -53,14 +53,19 @@ JNIEXPORT jint JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_runFeature
 
 jstring save_batch(
   JNIEnv *env,
-  const boost::shared_ptr<caffe::Blob<float> > feature_blob,
+  const std::vector<boost::shared_ptr<caffe::Blob<float>>> feature_blobs,
   const std::vector<std::string>& new_ids
 ) {
-  if (!feature_blob) {
+  if (feature_blobs.empty()) {
     return env->NewStringUTF("");
   }
 
-  int batch_size = feature_blob->num();
+  int batch_size = feature_blobs[0]->num();
+  for (int i = 1; i < feature_blobs.size(); ++i) {
+    if (feature_blobs[i]->num() != batch_size) {
+      return env->NewStringUTF("");
+    }
+  }
 
   if (!new_ids.empty() && new_ids.size() != batch_size) {
     throw std::runtime_error("New Id size must be batch size");
@@ -78,10 +83,9 @@ jstring save_batch(
   std::string file_name = ss.str();
   std::ofstream output_stream(file_name.c_str(), std::ios::binary);
   google::protobuf::io::ZeroCopyOutputStream* raw_output_stream =
-      new google::protobuf::io::OstreamOutputStream(&output_stream);
+    new google::protobuf::io::OstreamOutputStream(&output_stream);
 
   caffe::Datum datum;
-  int dim_features = feature_blob->count() / batch_size;
   const float* feature_blob_data;
   for (int n = 0; n < batch_size; ++n) {
     if (!new_ids.empty() && new_ids[n] == "") {
@@ -93,11 +97,21 @@ jstring save_batch(
     datum.set_channels(feature_blob->channels());
     datum.clear_data();
     datum.clear_float_data();
-    feature_blob_data = feature_blob->cpu_data() +
-                        feature_blob->offset(n);
-    for (int d = 0; d < dim_features; ++d) {
-      datum.add_float_data(feature_blob_data[d]);
+
+    for (int m = 0; m < feature_blobs.size(); ++m) {
+      boost::shared_ptr<caffe::Blob<float>> feature_blob = feature_blobs[m];
+      int dim_features = feature_blob->count() / batch_size;
+
+      feature_blob_data = feature_blob->cpu_data() +
+                          feature_blob->offset(n);
+
+      datum.add_float_data(dim_features); // TODO(zen): add dedicated column in Datum to pass size.
+
+      for (int d = 0; d < dim_features; ++d) {
+        datum.add_float_data(feature_blob_data[d]);
+      }
     }
+
 
     caffe::db::write_delimited_to(datum, raw_output_stream);
   }
@@ -124,9 +138,21 @@ JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_process
 
   env->ReleaseStringUTFChars(batchFilePath, batch_file_path);
 
-  const boost::shared_ptr<caffe::Blob<float> > feature_blob = instance.process_batch(batch);
+  static const char *arr[] = {
+    "pool5/7x7_s1",
+    "prob"
+  };
+  std::vector<std::string> layers(arr, std::end(arr));
+  const std::vector<boost::shared_ptr<caffe::Blob<float>>> feature_blobs = instance.process_batch(
+    batch,
+    layers
+  );
 
-  return save_batch(env, feature_blob, std::vector<std::string>());
+  if (feature_blobs.size() == layers.size()) {
+    return save_batch(env, feature_blobs, std::vector<std::string>());
+  } else {
+    return env->NewStringUTF("");
+  }
 }
 
 JNIEXPORT void JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_stopFeatureExtraction(
