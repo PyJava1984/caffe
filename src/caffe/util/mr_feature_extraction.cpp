@@ -41,7 +41,7 @@ int MRFeatureExtraction::run_feature_extraction_pipeline(
     "pool5/7x7_s1",
     get_output_pipe_path(),
     50,
-    Caffe::CPU,
+    Caffe::GPU,
     0
   );
 }
@@ -57,8 +57,8 @@ void MRFeatureExtraction::start_feature_extraction_pipeline(
   LOG(ERROR) << "Using GPU";
 
   LOG(ERROR) << "Using Device_id=" << 0;
-  // Caffe::SetDevice(0);
-  Caffe::set_mode(Caffe::CPU);
+  Caffe::SetDevice(0);
+  Caffe::set_mode(Caffe::GPU);
 
   feature_extraction_net_ = new Net<float>(feature_extraction_proto, caffe::TEST);
   feature_extraction_net_->CopyTrainedLayersFrom(pretrained_binary_proto);
