@@ -92,17 +92,14 @@ jstring save_batch(
       break;
     }
 
-
+    datum.set_height(feature_blobs[0]->height());
+    datum.set_width(feature_blobs[0]->width());
+    datum.set_channels(feature_blobs[0]->channels());
+    datum.clear_data();
+    datum.clear_float_data();
 
     for (int m = 0; m < feature_blobs.size(); ++m) {
       boost::shared_ptr<caffe::Blob<float>> feature_blob = feature_blobs[m];
-
-      datum.set_height(feature_blob->height());
-      datum.set_width(feature_blob->width());
-      datum.set_channels(feature_blob->channels());
-      datum.clear_data();
-      datum.clear_float_data();
-
       int dim_features = feature_blob->count() / batch_size;
 
       feature_blob_data = feature_blob->cpu_data() +
@@ -114,7 +111,6 @@ jstring save_batch(
         datum.add_float_data(feature_blob_data[d]);
       }
     }
-
 
     caffe::db::write_delimited_to(datum, raw_output_stream);
   }
