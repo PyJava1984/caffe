@@ -63,10 +63,14 @@ public:
   );
 
   const std::string get_input_pipe_path() {
+    LOG(ERROR) << "Getting in pipe path [" << "/tmp/foursquare_pcv1_input_pipe_" + uuid_str_ << "]";
+
     return "/tmp/foursquare_pcv1_input_pipe_" + uuid_str_;
   }
 
   const std::string get_output_pipe_path() {
+    LOG(ERROR) << "Getting out pipe path [" << "/tmp/foursquare_pcv1_output_pipe_" + uuid_str_ << "]";
+
     return "/tmp/foursquare_pcv1_output_pipe_" + uuid_str_;
   }
 
