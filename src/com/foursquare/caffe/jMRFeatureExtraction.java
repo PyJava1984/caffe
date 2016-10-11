@@ -235,16 +235,18 @@ public class jMRFeatureExtraction {
     if (asyncStarted) {
       // As we have no control of the last batch size here, we cannot wait it to reach 0.
       if (currentToNNBatchId - currentFromNNBatchId > 1) {
+        Thread.sleep(100);
+      }
+
+      if (currentToNNBatchId - currentFromNNBatchId == 1) {
+        // Wait 1 second for the last batch, but should not block.
         Thread.sleep(1000);
       }
 
-      // Wait 1 second for the last batch, but should not block.
-      Thread.sleep(1000);
       stopFeatureExtraction();
-      Thread.sleep(1000);
 
       try {
-        featureExtractionThread.join(5000);
+        featureExtractionThread.join(1000);
       } catch (Exception e) {
         asyncStarted = false;
 
