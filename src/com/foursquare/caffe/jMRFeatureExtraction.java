@@ -50,8 +50,10 @@ public class jMRFeatureExtraction {
   }
 
   public Caffe.Datum resizeRawImage(InputStream imageStream) {
+    String resultFileName = null;
+
     try {
-      String resultFileName = _resizeRawImage(readFully(imageStream));
+      resultFileName = _resizeRawImage(readFully(imageStream));
 
       if (resultFileName == "") {
         return null;
@@ -62,59 +64,84 @@ public class jMRFeatureExtraction {
 
       resultFileStream.close();
 
-      new File(resultFileName).delete();
-
       return datum;
     } catch (Exception ex) {
       return null;
+    } finally {
+      if (resultFileName != null) {
+        File f = new File(resultFileName);
+        if (f.exists()) {
+          f.delete();
+        }
+      }
     }
   }
 
   public List<Caffe.Datum> processBatch(Iterator<Caffe.Datum> batch) throws Exception {
-    String batchFileName = currentToNNBatchFileNamePrefix + UUID.randomUUID();
-    FileOutputStream batchStream = new FileOutputStream(batchFileName);
-    int batchSize = 0;
+    String batchFileName = null;
+    String resultFileName = null;
 
-    while (batch.hasNext()) {
-      Caffe.Datum datum = batch.next();
-      datum.writeDelimitedTo(batchStream);
-      ++batchSize;
+    try {
+      batchFileName = currentToNNBatchFileNamePrefix + UUID.randomUUID();
+      FileOutputStream batchStream = new FileOutputStream(batchFileName);
+      int batchSize = 0;
+
+      while (batch.hasNext()) {
+        Caffe.Datum
+        datum = batch.next();
+        datum.writeDelimitedTo(batchStream);
+        ++batchSize;
+      }
+
+      batchStream.close();
+
+      int retry = 0;
+      processBatch(batchFileName);
+      while ((batchFileName == null || batchFileName == "") && retry++ < 10) {
+        Thread.sleep(1000);
+        resultFileName = processBatch(batchFileName);
+      }
+
+      if (retry == 10) {
+        throw new Exception("Failed to process batch");
+      }
+
+      FileInputStream resultFileStream = new FileInputStream(resultFileName);
+      List<Caffe.Datum> results = new ArrayList<Caffe.Datum>();
+      Caffe.Datum datum = Caffe.Datum.parseDelimitedFrom(resultFileStream);
+
+      while (datum != null) {
+        results.add(datum);
+
+        datum = Caffe.Datum.parseDelimitedFrom(resultFileStream);
+      }
+
+      resultFileStream.close();
+
+      new File(resultFileName).delete ();
+
+      if (results.size() != batchSize) {
+        throw new Exception("Input size and output size do not match.");
+      }
+
+      return results;
+    } catch (Exception e) {
+      throw e;
+    } finally {
+      if (batchFileName != null) {
+        File f = new File(batchFileName);
+        if (f.exists()) {
+          f.delete();
+        }
+      }
+
+      if (resultFileName != null) {
+        File f = new File(resultFileName);
+        if (f.exists()) {
+          f.delete();
+        }
+      }
     }
-
-    batchStream.close();
-
-    int retry = 0;
-    String resultFileName = processBatch(batchFileName);
-    while ((batchFileName == null || batchFileName == "") && retry++ < 10) {
-      Thread.sleep(1000);
-      resultFileName = processBatch(batchFileName);
-    }
-
-    if (retry == 10) {
-      throw new Exception("Failed to process batch");
-    }
-
-    new File(batchFileName).delete();
-
-    FileInputStream resultFileStream = new FileInputStream(resultFileName);
-    List<Caffe.Datum> results = new ArrayList<Caffe.Datum>();
-    Caffe.Datum datum = Caffe.Datum.parseDelimitedFrom(resultFileStream);
-
-    while (datum != null) {
-      results.add(datum);
-
-      datum = Caffe.Datum.parseDelimitedFrom(resultFileStream);
-    }
-
-    resultFileStream.close();
-
-    new File(resultFileName).delete();
-
-    if (results.size() != batchSize) {
-      throw new Exception("Input size and output size do not match.");
-    }
-
-    return results;
   }
 
   public RandomAccessFile toNNFile = null;
