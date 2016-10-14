@@ -13,11 +13,11 @@
 #include "caffe/util/io.hpp"
 
 #include "mr_feature_extraction.hpp"
-#include "com_foursquare_caffe_jMRFeatureExtraction.h"
+#include "com_foursquare_rec_lib_image_CaffeFeatureExtractor.h"
 
 MRFeatureExtraction instance; // Singleton
 
-JNIEXPORT jint JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_startFeatureExtraction(
+JNIEXPORT jint JNICALL Java_com_foursquare_rec_lib_image_CaffeFeatureExtractor_startFeatureExtraction(
   JNIEnv *env,
   jobject obj,
   jstring pretrained_binary_proto,
@@ -34,7 +34,7 @@ JNIEXPORT jint JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_startFeatu
   return reinterpret_cast<jint>(0);
 }
 
-JNIEXPORT jint JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_runFeatureExtraction(
+JNIEXPORT jint JNICALL Java_com_foursquare_rec_lib_image_CaffeFeatureExtractor_runFeatureExtraction(
   JNIEnv *env,
   jobject obj,
   jstring pretrained_binary_proto,
@@ -121,7 +121,7 @@ jstring save_batch(
   return env->NewStringUTF(file_name.c_str());
 }
 
-JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_processBatch
+JNIEXPORT jstring JNICALL Java_com_foursquare_rec_lib_image_CaffeFeatureExtractor_processBatch
   (JNIEnv *env, jobject obj, jstring batchFilePath)
 {
   const char* batch_file_path = env->GetStringUTFChars(batchFilePath, NULL);
@@ -154,32 +154,14 @@ JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_process
   }
 }
 
-JNIEXPORT void JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_stopFeatureExtraction(
+JNIEXPORT void JNICALL Java_com_foursquare_rec_lib_image_CaffeFeatureExtractor_stopFeatureExtraction(
   JNIEnv *env,
   jobject obj
 ) {
   instance.stop_feature_extraction_pipeline();
 }
 
-JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_getInputPipePath(
-  JNIEnv *env,
-  jobject obj
-) {
-  const std::string inputPipePath = instance.get_input_pipe_path();
-
-  return env->NewStringUTF(inputPipePath.c_str());
-}
-
-JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction_getOutputPipePath(
-  JNIEnv *env,
-  jobject obj
-) {
-  const std::string outputPipePath = instance.get_output_pipe_path();
-
-  return env->NewStringUTF(outputPipePath.c_str());
-}
-
-JNIEXPORT jstring JNICALL Java_com_foursquare_caffe_jMRFeatureExtraction__1resizeRawImage(
+JNIEXPORT jstring JNICALL Java_com_foursquare_rec_lib_image_CaffeFeatureExtractor__1resizeRawImage(
   JNIEnv *env, 
   jobject obj, 
   jbyteArray rawImage
