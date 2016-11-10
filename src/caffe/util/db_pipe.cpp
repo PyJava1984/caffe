@@ -100,6 +100,10 @@ namespace caffe {
       }
 
       if (file_name_ != NULL) {
+        if (remove(file_name_) != 0) {
+          LOG(ERROR) << "Error when deleting file [" << file_name_ << "]";
+        }
+
         free(file_name_);
       }
 
