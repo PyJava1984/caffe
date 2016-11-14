@@ -1,7 +1,7 @@
 name: "GoogleNet"
 layer {
   name: "data"
-  type: "ImageFolderData"
+  type: "Data"
   top: "data"
   top: "label"
   include {
@@ -14,15 +14,10 @@ layer {
     mean_value: 117
     mean_value: 123
   }
-  image_data_param {
-    source: "/home/zen/imagenet/2011_3000_round1"
-    batch_size: 32
-    shuffle: true
-    new_height: 256
-    new_width: 256
-    known_label_path: "/home/zen/src/caffe/models/4sq_googlenet/4sq_label.txt"
-    debug_known_label_path: "/home/zen/src/caffe/models/4sq_googlenet/debug_4sq_label.txt"
-    debug_image_label_path: "/home/zen/src/caffe/models/4sq_googlenet/debug_train_label.txt"
+  data_param {
+    source: "/tmp/foursquare_to_caffe_trainer_pipe.txt
+    batch_size: 50
+    backend: PIPE
   }
 }
 layer {
